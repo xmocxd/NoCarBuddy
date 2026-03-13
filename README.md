@@ -18,5 +18,5 @@ This runs the React dev server and the Express API together via `concurrently`.
 
 Project docs live in **docs/**:
 
+- [docs/](docs/) – index of all docs  
 
-- (docs/) – index of all docs  
