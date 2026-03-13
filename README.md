@@ -2,6 +2,19 @@
 
 React + Express full-stack app with a PostgreSQL backend. The UI is built with Vite and Tailwind CSS; the API runs in the `server/` folder.
 
+
+## Limitations
+
+**--NOTE--**
+
+As a proof-of-concept testing/dev app, there are limitations to the GPS background fetch capabilities without using react-native.
+
+- You **must have the app fully open** in order for GPS to refresh
+- A no sleep function will keep device awake as long as the page is open
+
+At a later point, if this is ported to react-native, the implementation will be redone to allow for GPS tracking to pull data and record while phone is locked.
+
+
 ## Quick start
 
 Install dependencies (root and server), then start the app:

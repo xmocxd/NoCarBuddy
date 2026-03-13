@@ -1,2 +1,77 @@
+#V1
+
+- add email verification and password creation
+- add user login function
+- add test admin user/password to .env
+- refactor admin routes to own file
+
+- create user dashboard page
+    - show routes recorded
+    - record new route
+    - delete routes
+    - edit route names
+
+
+- route record view
+    - start recording (at 1st just display map) -- automatically names the route "Walk at 2026-1-1-03:05"
+    - stop recording -- prompts you to name the route
+    - exit -- prompts you to name the route
+
+
+- display map
+- get GPS coord -- display as coords
+- plot GPS location on map and zoom to location
+
+
+- refresh GPS location every 5 sec
+- button to manually refresh GPS location
+- plot a new point for the GPS location -- new point should have big pin, other points should be dot
+
+- a line should be drawn between each point in the sequence
+
+
+Routes Table
+
+Stores the metadata for the trip.
+
+id: Primary Key (UUID or Serial)
+user_id: Foreign Key (indexed)
+name: String (e.g., "Morning Commute")
+created_at: Timestamp
+
+
+Points Table
+
+Stores the actual GPS data. 
+
+id: Primary Key
+route_id: Foreign Key (references Routes.id, indexed)
+latitude: Decimal (precision 9, scale 6)
+longitude: Decimal (precision 9, scale 6)
+recorded_at: Timestamp (used to retain order)
+Optional: altitude, speed, accuracy 
+
+
+
+- save point data to a 'route' in db for the user
+- new route button -- wipe current points and start saving a new route
+
+
+
+
+
+
+
+Screen Stay-Awake (No-Sleep):
+You can use a "No-Sleep" library (like NoSleep.js) to play a tiny hidden video. This prevents the phone from locking automatically, keeping the browser in the foreground. However, this is battery-intensive and fails if the user manually locks the screen.
+
+
+
+
+#V2
+
+- auto name the route "Walk near <location description> March 1 2026" -- "Walk #2 near <location description> March 1 2026" if not unique
+- setting to change between timestamp, location description auto format
+
 - make the initial database / table creation better --- should just be run during setup of the app.  ideally 1 command or script will run all the necessary setup including database spin up
 

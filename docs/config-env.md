@@ -27,12 +27,15 @@ CREATE DATABASE nocarbuddy;
 
 
 2. Add the database connection info to `.env` file in the project root.   *NOTE: SASL SCRAM may prevent server startup if a single line connection string is used -- do not use.*
+Also add a JWT_SECRET for development purposes
+
 ```
 PGUSER="test"
 PGPASSWORD="test"
 PGHOST="localhost"
 PGPORT=5432
 PGDATABASE="nocarbuddy"
+JWT_SECRET="test-secret"
 ```
 
 The server creates the `users` table automatically on startup if it does not exist.
