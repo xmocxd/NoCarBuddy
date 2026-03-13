@@ -1,35 +1,45 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
+import NavBar from "./components/NavBar.jsx";
+import HomePage from "./components/HomePage.jsx";
+import NotFound from "./components/NotFound.jsx";
+import AdminPage from "./components/AdminPage.jsx";
+import SignUpPage from "./components/SignUpPage.jsx";
+import ConfirmationPage from "./components/ConfirmationPage.jsx";
+import AdminLoginPage from "./components/AdminLoginPage.jsx";
 
-function App() {
-  const [count, setCount] = useState(0)
+const pages = [
+    { path: "signup/", title: "Sign Up" },
+    { path: "admin/", title: "Admin" },
+]
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+const router = createBrowserRouter([
+    {
+        // main element to display routes within
+        element: (
+            <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 px-4">
+                <NavBar pages={pages} />
+                <Outlet />
+            </div>
+        ),
+        children: [
+            { path: "/", element: <HomePage /> },
+            { path: "admin/", element: <AdminPage /> },
+            { path: "admin/login", element: <AdminLoginPage /> },
+            { path: "signup/", element: <SignUpPage /> },
+            { path: "confirmation/", element: <ConfirmationPage /> },
+            { path: "*", element: <NotFound /> },
+        ],
+    },
+]);
+
+function App ()
+{
+    
+    return (
+        <>
+        <RouterProvider router={router} />
+        </>
+    );
 }
 
-export default App
+export default App;
