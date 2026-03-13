@@ -9,6 +9,9 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import cookieParser  from 'cookie-parser';
 
+// Database schema helper: ensures the users table exists before the app starts serving requests.
+import { ensureSchema } from './db.js';
+
 import users from './routes/users.js';
 import auth from './middleware/auth.js';
 
@@ -80,6 +83,18 @@ app.use(function(req, res, next) {
   next(err);
 });
 
-ViteExpress.listen(app, PORT, () =>
-  console.log(`Server listening on port ${PORT}`)
-);
+// Initialize database schema once on startup, then start the HTTP server.
+// This guarantees the users table exists as soon as the app is up, instead of waiting for the first /users request.
+(async () => {
+  try {
+    await ensureSchema();
+    console.log('Database schema initialized (users table ensured).');
+
+    ViteExpress.listen(app, PORT, () =>
+      console.log(`Server listening on port ${PORT}`)
+    );
+  } catch (err) {
+    console.error('Failed to initialize database schema. Server will not start.', err);
+    process.exit(1);
+  }
+})();

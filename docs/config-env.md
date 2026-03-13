@@ -23,10 +23,16 @@ CREATE DATABASE nocarbuddy;
 \q
 ```
 
+*NOTE: if you use a numeric password such as 1234, the server may crash on startup with 'client password must be a string' -- make sure to use an alphanumeric password*
 
-2. Add the database connection string to `.env` file in the project root
+
+2. Add the database connection info to `.env` file in the project root.   *NOTE: SASL SCRAM may prevent server startup if a single line connection string is used -- do not use.*
 ```
-DATABASE_URL=postgresql://user:password@localhost:5432/nocarbuddy
+PGUSER="test"
+PGPASSWORD="test"
+PGHOST="localhost"
+PGPORT=5432
+PGDATABASE="nocarbuddy"
 ```
 
 The server creates the `users` table automatically on startup if it does not exist.
