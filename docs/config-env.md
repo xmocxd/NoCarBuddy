@@ -27,8 +27,8 @@ CREATE DATABASE nocarbuddy;
 
 
 2. Add the database connection info to `.env` file in the project root.   *NOTE: SASL SCRAM may prevent server startup if a single line connection string is used -- do not use.*
-Also add a JWT_SECRET for development purposes
-Also add admin user name and password for user management
+Also add a JWT_SECRET for development purposes.
+Also add admin user name and password for user management.
 
 ```
 PGUSER="test"
@@ -45,8 +45,15 @@ ADMIN_PASSWORD="admin"
 
 The server creates the `users` table automatically on startup if it does not exist.
 
-To install and start the project:
+**To install and start the project:**
 
+Make sure `nodemon` is installed:
+
+```
+npm install -g nodemon
+```
+
+Start server:
 ```
 npm i
 cd server
