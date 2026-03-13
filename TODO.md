@@ -2,8 +2,7 @@
 
 - add email verification and password creation
 - add user login function
-- add test admin user/password to .env
-- refactor admin routes to own file
+
 
 - create user dashboard page
     - show routes recorded

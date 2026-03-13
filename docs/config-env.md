@@ -28,6 +28,7 @@ CREATE DATABASE nocarbuddy;
 
 2. Add the database connection info to `.env` file in the project root.   *NOTE: SASL SCRAM may prevent server startup if a single line connection string is used -- do not use.*
 Also add a JWT_SECRET for development purposes
+Also add admin user name and password for user management
 
 ```
 PGUSER="test"
@@ -35,7 +36,11 @@ PGPASSWORD="test"
 PGHOST="localhost"
 PGPORT=5432
 PGDATABASE="nocarbuddy"
+
 JWT_SECRET="test-secret"
+
+ADMIN_USER="admin"
+ADMIN_PASSWORD="admin"
 ```
 
 The server creates the `users` table automatically on startup if it does not exist.
@@ -91,8 +96,13 @@ server: {
 | `npm start` | Run frontend and backend together |
 | `npm run dev` | Run Vite dev server only |
 | `npm run server` | Run Express server only |
+| `npm run server-dev` | Run Express server with `nodemon -L` (required under WSL for file watching) |
 | `npm run build` | Production build (Vite) |
 | `npm run preview` | Preview production build |
+
+*Note: When running under WSL, `nodemon` must be started with the `-L` flag (legacy watch mode) for file watching to work correctly. The `server-dev` script is already configured with `nodemon -L`.*
+
+**npm start runs dev and server-dev scripts at once**
 
 
 
