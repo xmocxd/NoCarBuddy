@@ -1,6 +1,6 @@
 # Database implementation
 
-NoCarBuddy stores user data in **PostgreSQL**. The implementation lives under `server/` and is kept minimal: one shared connection pool, one table, and schema creation on first use (no separate migration step).
+NoCarBuddy stores user data in **PostgreSQL**.
 
 ## Overview
 
