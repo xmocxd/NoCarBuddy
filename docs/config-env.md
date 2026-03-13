@@ -19,7 +19,7 @@ Inside psql, create a user and the db:
 
 ```
 CREATE ROLE your_username WITH LOGIN SUPERUSER PASSWORD 'your_password';
-createdb nocarbuddy;
+CREATE DATABASE nocarbuddy;
 \q
 ```
 
@@ -105,5 +105,6 @@ To run the tests:
 ```
 npm test
 ```
+
 
 
