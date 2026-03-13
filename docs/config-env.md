@@ -4,17 +4,32 @@ The project uses `concurrently` to run the front end and back end server for dev
 
 The express server is scoped within the server/ folder, and has its own `npm` package.  Both sets of dependencies have to be installed in before running the app.
 
-## Database (PostgreSQL)
+## First Time Setup
 
-User data is stored in PostgreSQL. Set the connection in your environment (e.g. a `.env` file in the project root, which the server loads via `dotenv`).
+1. Set up the database - install postgres if needed, then create the db
 
-- **Option 1 – single URL:**  
-  `DATABASE_URL=postgresql://user:password@localhost:5432/nocarbuddy`
+```
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+sudo service postgresql start
+sudo -u postgres psql
+```
 
-- **Option 2 – individual vars:**  
-  `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE` (the server will build the connection string from these if `DATABASE_URL` is not set).
+Inside psql, create a user and the db:
 
-Create the database if needed (e.g. `createdb nocarbuddy`). The server creates the `users` table automatically on startup if it does not exist.
+```
+CREATE ROLE your_username WITH LOGIN SUPERUSER PASSWORD 'your_password'
+createdb nocarbuddy
+\q
+```
+
+
+2. Add the database connection string to `.env` file in the project root
+```
+DATABASE_URL=postgresql://user:password@localhost:5432/nocarbuddy
+```
+
+The server creates the `users` table automatically on startup if it does not exist.
 
 To install and start the project:
 
@@ -33,11 +48,9 @@ npm start
 
 Vite config uses a proxy to forward API requests to the Express server during development.
 
-This sends any requests starting with `/api` to `http://localhost:3000` (the Express server), while allowing other requests to pass through to the react server.
-
-A rewrite function is used to remove the `/api` prefix before forwarding the request to the Express server.
-
-usePolling is enabled to support running under the server under WSL.
+- This sends any requests starting with `/api` to `http://localhost:3000` (the Express server), while allowing other requests to pass through to the react server.
+- A rewrite function is used to remove the `/api` prefix before forwarding the request to the Express server.
+- usePolling is enabled to support running under the server under WSL.
 
 
 from `vite.config.js`:
@@ -92,3 +105,4 @@ To run the tests:
 ```
 npm test
 ```
+
