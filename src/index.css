@@ -7,7 +7,8 @@ body {
     height: 100vh;
     margin: 0;
     padding: 0;
-    background-color: oklch(27.9% 0.041 260.031);
+    /* Very dark charcoal cool gray */
+    background-color: #0d0e10;
 }
 
 @import "tailwindcss";

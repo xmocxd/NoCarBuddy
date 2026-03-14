@@ -94,7 +94,7 @@ function SetPasswordPage() {
                     </p>
                     <Link
                         to="/signup/"
-                        className="inline-block rounded-lg bg-blue-600 text-white hover:bg-blue-700 py-2 px-6 font-semibold"
+                        className="inline-block rounded-lg bg-emerald-700 text-white hover:bg-emerald-600 py-2 px-6 font-semibold"
                     >
                         Go to Sign up
                     </Link>
@@ -124,7 +124,7 @@ function SetPasswordPage() {
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full p-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500"
+                            className="w-full p-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-emerald-500"
                             required
                             minLength={8}
                             autoComplete="new-password"
@@ -137,7 +137,7 @@ function SetPasswordPage() {
                             type="password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="w-full p-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500"
+                            className="w-full p-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-emerald-500"
                             required
                             minLength={8}
                             autoComplete="new-password"
@@ -147,7 +147,7 @@ function SetPasswordPage() {
                         <button
                             type="submit"
                             disabled={submitting}
-                            className="w-full sm:w-auto rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 py-3 px-6 font-semibold"
+                            className="w-full sm:w-auto rounded-lg bg-emerald-700 text-white hover:bg-emerald-600 disabled:opacity-50 py-3 px-6 font-semibold"
                         >
                             {submitting ? "Setting password..." : "Set password"}
                         </button>

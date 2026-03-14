@@ -140,14 +140,14 @@ function DashboardPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {routes.length === 0 ? (
+                            {mapRoutes.length === 0 ? (
                                 <tr>
                                     <td colSpan={5} className="py-6 text-slate-400 text-center">
                                         No routes yet. Tap the + button below to record one.
                                     </td>
                                 </tr>
                             ) : (
-                                routes.map((route) => (
+                                mapRoutes.map((route) => (
                                     <tr key={route.id} className="border-b border-slate-700 hover:bg-slate-700/30">
                                         <td className="py-2 px-2 text-white">
                                             {editingId === route.id ? (
@@ -161,7 +161,7 @@ function DashboardPage() {
                                                     />
                                                     <button
                                                         onClick={saveEdit}
-                                                        className="rounded bg-blue-600 text-white px-2 py-1 text-sm hover:bg-blue-700"
+                                                        className="rounded bg-emerald-700 text-white px-2 py-1 text-sm hover:bg-emerald-600"
                                                     >
                                                         Save
                                                     </button>
@@ -186,7 +186,7 @@ function DashboardPage() {
                                             {editingId === route.id ? null : (
                                                 <button
                                                     onClick={() => startEdit(route)}
-                                                    className="rounded p-1.5 text-slate-400 hover:text-blue-400 hover:bg-slate-700"
+                                                    className="rounded p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-700"
                                                     title="Edit route name"
                                                 >
                                                     <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -197,7 +197,7 @@ function DashboardPage() {
                                         </td>
                                         <td className="py-2 px-2">
                                             <button
-                                                onClick={() => deleteRoute(route.id)}
+                                                onClick={() => deleteMapRoute(route.id)}
                                                 className="rounded p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-700"
                                                 title="Delete route"
                                             >
@@ -218,7 +218,7 @@ function DashboardPage() {
             <div className="fixed bottom-8 left-0 right-0 flex justify-center z-10 px-4">
                 <Link
                     to="/dashboard/record"
-                    className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                    className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-emerald-700 text-white hover:bg-emerald-600 shadow-lg hover:shadow-xl transition-all hover:scale-105"
                     title="Record new map route"
                 >
                     <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">

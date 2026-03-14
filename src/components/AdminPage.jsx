@@ -87,7 +87,7 @@ function AdminPage() {
                 <p className="text-base sm:text-xl md:text-2xl text-slate-300 font-light mb-6 sm:mb-8">
                     View and Modify User Accounts <span className="text-green-400 block sm:inline mt-2 sm:mt-0">{adminStatus && "-- Admin Access OK"}</span>
                 </p>
-                <p className="text-base sm:text-lg mb-4 sm:mb-8 font-bold text-blue-300">Registered Users:</p>
+                <p className="text-base sm:text-lg mb-4 sm:mb-8 font-bold text-amber-300">Registered Users:</p>
                 <div className="text-sm sm:text-base lg:text-lg text-slate-300 overflow-x-auto">
                     <table className="w-full table-auto border-collapse min-w-[640px]">
                         <thead>

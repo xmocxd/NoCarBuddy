@@ -242,7 +242,7 @@ function RecordRoutePage() {
                                 value={dialogName}
                                 onChange={(e) => setDialogName(e.target.value)}
                                 placeholder="Optional custom name"
-                                className="w-full p-3 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                                className="w-full p-3 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-500 focus:outline-none focus:border-slate-500"
                                 autoFocus
                             />
                         </div>
@@ -258,7 +258,7 @@ function RecordRoutePage() {
                                 type="button"
                                 onClick={handleDialogOk}
                                 disabled={saving}
-                                className="rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 py-2 px-4 font-semibold"
+                                className="rounded-lg bg-slate-600 text-white hover:bg-slate-500 disabled:opacity-50 py-2 px-4 font-semibold"
                             >
                                 {saving ? "Saving…" : "OK"}
                             </button>

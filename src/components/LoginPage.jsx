@@ -51,7 +51,7 @@ function LoginPage() {
                         <input
                             id="email"
                             type="email"
-                            className="w-full p-2.5 sm:p-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500 text-sm sm:text-base"
+                            className="w-full p-2.5 sm:p-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-emerald-500 text-sm sm:text-base"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
@@ -63,7 +63,7 @@ function LoginPage() {
                         <input
                             id="password"
                             type="password"
-                            className="w-full p-2.5 sm:p-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500 text-sm sm:text-base"
+                            className="w-full p-2.5 sm:p-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-emerald-500 text-sm sm:text-base"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
@@ -74,7 +74,7 @@ function LoginPage() {
                         <button
                             type="submit"
                             disabled={submitting}
-                            className="mt-5 w-full sm:w-auto rounded-lg bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 cursor-pointer py-3 px-6 sm:px-8 transition-all duration-200 font-semibold shadow-lg shadow-blue-600/50 hover:shadow-xl hover:shadow-blue-600/60 text-sm sm:text-base"
+                            className="mt-5 w-full sm:w-auto rounded-lg bg-emerald-700 text-white hover:bg-emerald-600 active:bg-emerald-800 disabled:opacity-50 cursor-pointer py-3 px-6 sm:px-8 transition-all duration-200 font-semibold shadow-lg shadow-emerald-800/50 hover:shadow-xl hover:shadow-emerald-700/60 text-sm sm:text-base"
                         >
                             {submitting ? "Logging in..." : "Log in"}
                         </button>

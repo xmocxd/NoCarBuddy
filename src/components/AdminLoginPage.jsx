@@ -32,7 +32,7 @@ function AdminLoginPage() {
                     <div>
                         <label className="block text-slate-300 mb-2 text-sm sm:text-base" htmlFor="username">Username</label>
                         <input
-                            className="w-full p-2.5 sm:p-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500 text-sm sm:text-base"
+                            className="w-full p-2.5 sm:p-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-emerald-500 text-sm sm:text-base"
                             type="text"
                             name="username"
                             value={userName}
@@ -42,7 +42,7 @@ function AdminLoginPage() {
                     <div>
                         <label className="block text-slate-300 mb-2 text-sm sm:text-base" htmlFor="password">Password</label>
                         <input
-                            className="w-full p-2.5 sm:p-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500 text-sm sm:text-base"
+                            className="w-full p-2.5 sm:p-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-emerald-500 text-sm sm:text-base"
                             type="password"
                             name="password"
                             value={password}
@@ -50,7 +50,7 @@ function AdminLoginPage() {
                         />
                     </div>
                     <div className="text-center">
-                        <button onClick={(e) => { e.preventDefault(); submit(); }} className="mt-5 w-full sm:w-auto rounded-lg bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 cursor-pointer py-3 px-6 sm:px-8 transition-all duration-200 font-semibold shadow-lg shadow-blue-600/50 hover:shadow-xl hover:shadow-blue-600/60 hover:scale-105 transform text-sm sm:text-base" type="submit">
+                        <button onClick={(e) => { e.preventDefault(); submit(); }} className="mt-5 w-full sm:w-auto rounded-lg bg-emerald-700 text-white hover:bg-emerald-600 active:bg-emerald-800 cursor-pointer py-3 px-6 sm:px-8 transition-all duration-200 font-semibold shadow-lg shadow-emerald-800/50 hover:shadow-xl hover:shadow-emerald-700/60 hover:scale-105 transform text-sm sm:text-base" type="submit">
                             Login
                         </button>
                     </div>
