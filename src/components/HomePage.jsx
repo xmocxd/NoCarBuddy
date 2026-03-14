@@ -1,8 +1,12 @@
 import { Link } from "react-router-dom";
+import HomePageMap from "./HomePageMap.jsx";
 
 function HomePage() {
     return (
-        <div className="max-w-2xl w-full">
+        <div className="max-w-2xl w-full flex flex-col gap-8 mt-16">
+            <div className="w-full max-w-xl aspect-square mx-auto rounded-xl overflow-hidden border border-slate-700/80 shadow-xl">
+                <HomePageMap className="h-full w-full" />
+            </div>
             <div className="text-center space-y-8">
                 <div className="space-y-4">
                     <h1 className="text-6xl md:text-7xl font-bold text-white mb-6 tracking-tight">

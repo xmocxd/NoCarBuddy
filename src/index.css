@@ -11,4 +11,16 @@ body {
     background-color: #0d0e10;
 }
 
+/* Dark mode map: invert OSM tiles and keep labels readable */
+.leaflet-tile {
+    filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+}
+.leaflet-container {
+    background: #303030 !important;
+}
+.green-map-pin.leaflet-div-icon {
+    background: none !important;
+    border: none !important;
+}
+
 @import "tailwindcss";
