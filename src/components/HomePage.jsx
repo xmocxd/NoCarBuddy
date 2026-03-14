@@ -3,10 +3,7 @@ import HomePageMap from "./HomePageMap.jsx";
 
 function HomePage() {
     return (
-        <div className="max-w-2xl w-full flex flex-col gap-8 mt-16">
-            <div className="w-full max-w-xl aspect-square mx-auto rounded-xl overflow-hidden border border-slate-700/80 shadow-xl">
-                <HomePageMap className="h-full w-full" />
-            </div>
+        <div className="max-w-2xl w-full flex flex-col gap-8 my-20">
             <div className="text-center space-y-8">
                 <div className="space-y-4">
                     <h1 className="text-6xl md:text-7xl font-bold text-white mb-6 tracking-tight">
@@ -18,6 +15,10 @@ function HomePage() {
                     <p className="text-lg text-slate-400">
                         Record and annotate Walking and Biking (TODO) paths you discover in your local area.
                         Link them together (TODO) to create enjoyable No-Car options to get to your favorite destinations.
+                    </p>
+                    <p className="text-lg text-red-400">
+                        <em>PLEASE NOTE: This is a test / proof-of-concept app, and has GPS tracking limitations.
+                        You must keep your phone open while using the app - it will not work as intended if you lock your phone.</em>
                     </p>
                     <p className="text-lg text-slate-400">
                         Sign up for an account to get started
@@ -35,6 +36,10 @@ function HomePage() {
                             Log In
                         </button>
                     </Link>
+                </div>
+
+                <div className="w-full max-w-xl aspect-square mx-auto rounded-xl overflow-hidden border border-slate-700/80 shadow-xl">
+                    <HomePageMap className="h-full w-full" />
                 </div>
 
                 <div className="pt-8 border-t border-slate-700 mt-12">
