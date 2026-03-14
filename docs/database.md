@@ -6,7 +6,7 @@ NoCarBuddy stores user data in **PostgreSQL**.
 
 - **Engine:** PostgreSQL, accessed via the Node.js `pg` client.
 - **Connection:** A single connection pool (`pg.Pool`) in `server/db.js` is used for all database access. The pool is reused across requests and avoids opening a new connection per request.
-- **Schema:** One table, `users`. The table is created automatically when the app first uses the database (`CREATE TABLE IF NOT EXISTS`), so no manual migration or SQL script is required to run the app.
+- **Schema:** Two tables, `users` and `map_routes`. Both are created automatically when the app first uses the database (`CREATE TABLE IF NOT EXISTS`), so no manual migration or SQL script is required to run the app.
 
 ## Configuration
 
@@ -39,6 +39,21 @@ CREATE TABLE IF NOT EXISTS users (
 
 This table is created in code when `ensureSchema()` runs (see below); there is no separate migration file to run.
 
+### Table: `map_routes`
+
+Stores GPS-recorded map routes (tracks) per user.
+
+| Column       | Type         | Description |
+|--------------|--------------|-------------|
+| `id`         | SERIAL       | Primary key. |
+| `user_id`    | INTEGER      | Foreign key to `users(id)`. Not null. |
+| `name`       | VARCHAR(255) | Display name for the map route. Not null. |
+| `recorded_at`| TIMESTAMPTZ  | When the map route was recorded. Not null, default `now()`. |
+| `location`   | TEXT         | Optional location description. |
+| `points`     | JSONB        | Array of points (e.g. `[{ lat, lng }]`). Not null, default `'[]'`. |
+
+The table is created in `server/db.js` together with `users` when `ensureSchema()` runs. Map route CRUD is handled by `server/routes/mapRoutes.js` and mounted at `/map-routes`.
+
 ## Code layout
 
 ### `server/db.js`
@@ -47,7 +62,7 @@ This table is created in code when `ensureSchema()` runs (see below); there is n
 - **Exports:**
   - `pool` – the shared `pg.Pool`. Use this or the `query` helper for all DB access.
   - `query(text, params)` – runs a parameterized query (`$1`, `$2`, …) via the pool. Use it to avoid SQL injection and to share the same pool.
-  - `ensureSchema()` – creates the `users` table if it does not exist (`CREATE TABLE IF NOT EXISTS`). Idempotent; safe to call on every request (no-op after the first successful run).
+  - `ensureSchema()` – creates the `users` and `map_routes` tables if they do not exist (`CREATE TABLE IF NOT EXISTS`). Idempotent; safe to call on every request (no-op after the first successful run).
 - Schema is applied on first use by the routes that need the database, not at server startup.
 
 ### `server/routes/users.js`

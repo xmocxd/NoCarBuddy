@@ -11,6 +11,7 @@ import cookieParser  from 'cookie-parser';
 import { ensureSchema } from './db.js';
 
 import users from './routes/users.js';
+import mapRoutes from './routes/mapRoutes.js';
 import admin from './routes/admin.js';
 import setPassword from './routes/setPassword.js';
 
@@ -26,6 +27,7 @@ app.use(cors({
 app.use(cookieParser());
 
 app.use('/users', users);
+app.use('/map-routes', mapRoutes);
 app.use('/set-password', setPassword);
 app.use('/admin', admin);
 

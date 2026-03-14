@@ -8,16 +8,16 @@ REVISE
 
 
 - create user dashboard page
-    - show routes recorded
-    - record new route
-    - delete routes
-    - edit route names
+    - show map routes recorded
+    - record new map route
+    - delete map routes
+    - edit map route names
 
 
-- route record view
-    - start recording (at 1st just display map) -- automatically names the route "Walk at 2026-1-1-03:05"
-    - stop recording -- prompts you to name the route
-    - exit -- prompts you to name the route
+- map route record view
+    - start recording (at 1st just display map) -- automatically names the map route "Walk at 2026-1-1-03:05"
+    - stop recording -- prompts you to name the map route
+    - exit -- prompts you to name the map route
 
 
 - display map
@@ -32,7 +32,7 @@ REVISE
 - a line should be drawn between each point in the sequence
 
 
-Routes Table
+Map Routes Table
 
 Stores the metadata for the trip.
 
@@ -47,7 +47,7 @@ Points Table
 Stores the actual GPS data. 
 
 id: Primary Key
-route_id: Foreign Key (references Routes.id, indexed)
+map_route_id: Foreign Key (references map_routes.id, indexed)
 latitude: Decimal (precision 9, scale 6)
 longitude: Decimal (precision 9, scale 6)
 recorded_at: Timestamp (used to retain order)
@@ -55,8 +55,8 @@ Optional: altitude, speed, accuracy
 
 
 
-- save point data to a 'route' in db for the user
-- new route button -- wipe current points and start saving a new route
+- save point data to a map route in db for the user
+- new map route button -- wipe current points and start saving a new map route
 
 
 
@@ -72,7 +72,7 @@ You can use a "No-Sleep" library (like NoSleep.js) to play a tiny hidden video. 
 
 #V2
 
-- auto name the route "Walk near <location description> March 1 2026" -- "Walk #2 near <location description> March 1 2026" if not unique
+- auto name the map route "Walk near <location description> March 1 2026" -- "Walk #2 near <location description> March 1 2026" if not unique
 - setting to change between timestamp, location description auto format
 
 - make the initial database / table creation better --- should just be run during setup of the app.  ideally 1 command or script will run all the necessary setup including database spin up

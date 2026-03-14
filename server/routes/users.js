@@ -169,6 +169,15 @@ router.post('/', async function (req, res, next) {
       console.warn('[users] Sign up succeeded but set-password email failed:', emailResult.error);
     }
 
+    // Give the new user one test map route with a single random point so the dashboard has something to show.
+    const lat = 37 + Math.random() * 2;
+    const lng = -122 + Math.random() * 2;
+    const testPoints = JSON.stringify([{ lat, lng }]);
+    await query(
+      'INSERT INTO map_routes (user_id, name, recorded_at, location, points) VALUES ($1, $2, now(), $3, $4)',
+      [user.id, 'Sample map route', 'Sample location', testPoints]
+    );
+
     // Return the user without the token in the response (the token is only in the email).
     res.json(user);
   } catch (err) {

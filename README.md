@@ -31,5 +31,6 @@ This runs the React dev server and the Express API together via `concurrently`.
 
 Project docs live in **docs/**:
 
-- [docs/](docs/) – index of all docs  
+- [docs/](docs/) – index of all docs
+- [User sign-up and admin panel](docs/signup-and-admin.md) – sign-up flow, set-password email, and admin panel  
 

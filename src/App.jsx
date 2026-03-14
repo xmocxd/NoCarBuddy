@@ -8,6 +8,7 @@ import ConfirmationPage from "./components/ConfirmationPage.jsx";
 import SetPasswordPage from "./components/SetPasswordPage.jsx";
 import LoginPage from "./components/LoginPage.jsx";
 import DashboardPage from "./components/DashboardPage.jsx";
+import RecordRoutePage from "./components/RecordRoutePage.jsx";
 import AdminLoginPage from "./components/AdminLoginPage.jsx";
 
 const pages = [
@@ -33,6 +34,7 @@ const router = createBrowserRouter([
             { path: "signup/", element: <SignUpPage /> },
             { path: "login/", element: <LoginPage /> },
             { path: "dashboard/", element: <DashboardPage /> },
+            { path: "dashboard/record", element: <RecordRoutePage /> },
             { path: "set-password/", element: <SetPasswordPage /> },
             { path: "confirmation/", element: <ConfirmationPage /> },
             { path: "*", element: <NotFound /> },

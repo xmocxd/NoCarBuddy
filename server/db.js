@@ -44,17 +44,43 @@ const CREATE_USERS_TABLE = `
   );
 `;
 
+/** Map routes (GPS recorded tracks) per user. Each row is one map route (a list of points). duration_seconds = recording length. */
+const CREATE_MAP_ROUTES_TABLE = `
+  CREATE TABLE IF NOT EXISTS map_routes (
+    id               SERIAL PRIMARY KEY,
+    user_id          INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name             VARCHAR(255) NOT NULL,
+    recorded_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    location         TEXT,
+    points           JSONB NOT NULL DEFAULT '[]',
+    duration_seconds INTEGER
+  );
+`;
+
 /**
- * Ensure the users table exists. Called once when this module is first used.
+ * Ensure the users and map_routes tables exist. Called once when this module is first used.
  * Uses IF NOT EXISTS so it is safe to run on every startup.
  */
 let schemaInitialized = false;
+
+/** Add duration_seconds to map_routes if the table exists but the column is missing (e.g. existing DBs). */
+const ADD_DURATION_COLUMN = `
+  DO $$
+  BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'map_routes')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'map_routes' AND column_name = 'duration_seconds') THEN
+      ALTER TABLE map_routes ADD COLUMN duration_seconds INTEGER;
+    END IF;
+  END $$;
+`;
 
 export async function ensureSchema() {
   if (schemaInitialized) return;
   const client = await pool.connect();
   try {
     await client.query(CREATE_USERS_TABLE);
+    await client.query(CREATE_MAP_ROUTES_TABLE);
+    await client.query(ADD_DURATION_COLUMN);
     schemaInitialized = true;
   } finally {
     client.release();
