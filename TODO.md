@@ -1,5 +1,8 @@
 #V1
 
+
+
+REVISE
 - add email verification and password creation
 - add user login function
 

@@ -43,6 +43,22 @@ ADMIN_USER="admin"
 ADMIN_PASSWORD="admin"
 ```
 
+**Optional – Set-password email (after sign up):**  
+If you want the app to send a “set your password” email when users sign up, set SMTP and base URL:
+
+```
+SMTP_HOST="smtp.example.com"
+SMTP_PORT="587"
+SMTP_SECURE="false"
+SMTP_USER="your-smtp-user"
+SMTP_PASS="your-smtp-password"
+SMTP_FROM="noreply@yourdomain.com"
+APP_BASE_URL="http://localhost:5173"
+```
+
+- `APP_BASE_URL` is the public URL of the frontend (used for the link in the email). Defaults to `http://localhost:5173` if not set.
+- If `SMTP_HOST` and `SMTP_PORT` are not set, the server still runs; it will log the set-password link to the console instead of sending email (handy for local testing).
+
 The server creates the `users` table automatically on startup if it does not exist.
 
 **To install and start the project:**

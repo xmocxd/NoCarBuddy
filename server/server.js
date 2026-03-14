@@ -12,6 +12,7 @@ import { ensureSchema } from './db.js';
 
 import users from './routes/users.js';
 import admin from './routes/admin.js';
+import setPassword from './routes/setPassword.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,6 +26,7 @@ app.use(cors({
 app.use(cookieParser());
 
 app.use('/users', users);
+app.use('/set-password', setPassword);
 app.use('/admin', admin);
 
 app.get('/message', (req, res) => {

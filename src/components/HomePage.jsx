@@ -22,9 +22,11 @@ function HomePage() {
                             Get Started
                         </button>
                     </Link>
-                    <button className="w-full sm:w-auto rounded-lg bg-slate-800 text-slate-300 border-2 border-slate-600 hover:border-slate-500 hover:bg-slate-700 py-4 px-8 transition-all duration-200 font-semibold text-lg cursor-not-allowed opacity-60">
-                        Log In
-                    </button>
+                    <Link to="/login/" className="w-full sm:w-auto">
+                        <button className="w-full sm:w-auto rounded-lg bg-slate-800 text-slate-300 border-2 border-slate-600 hover:border-slate-500 hover:bg-slate-700 py-4 px-8 transition-all duration-200 font-semibold text-lg cursor-pointer hover:scale-105 transform">
+                            Log In
+                        </button>
+                    </Link>
                 </div>
 
                 <div className="pt-8 border-t border-slate-700 mt-12">

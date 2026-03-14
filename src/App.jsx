@@ -5,10 +5,15 @@ import NotFound from "./components/NotFound.jsx";
 import AdminPage from "./components/AdminPage.jsx";
 import SignUpPage from "./components/SignUpPage.jsx";
 import ConfirmationPage from "./components/ConfirmationPage.jsx";
+import SetPasswordPage from "./components/SetPasswordPage.jsx";
+import LoginPage from "./components/LoginPage.jsx";
+import DashboardPage from "./components/DashboardPage.jsx";
 import AdminLoginPage from "./components/AdminLoginPage.jsx";
 
 const pages = [
     { path: "signup/", title: "Sign Up" },
+    { path: "login/", title: "Log In" },
+    { path: "dashboard/", title: "Dashboard" },
     { path: "admin/", title: "Admin" },
 ]
 
@@ -26,6 +31,9 @@ const router = createBrowserRouter([
             { path: "admin/", element: <AdminPage /> },
             { path: "admin/login", element: <AdminLoginPage /> },
             { path: "signup/", element: <SignUpPage /> },
+            { path: "login/", element: <LoginPage /> },
+            { path: "dashboard/", element: <DashboardPage /> },
+            { path: "set-password/", element: <SetPasswordPage /> },
             { path: "confirmation/", element: <ConfirmationPage /> },
             { path: "*", element: <NotFound /> },
         ],
