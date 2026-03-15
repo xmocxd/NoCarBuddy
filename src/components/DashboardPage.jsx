@@ -114,7 +114,7 @@ function DashboardPage() {
     const displayName = (profile.firstName || profile.email || "there").trim() || "there";
 
     return (
-        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 pt-20 sm:pt-24 pb-32">
+        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-48">
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl shadow-2xl p-4 sm:p-6 lg:p-8 border border-slate-700">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <h1 className="text-2xl sm:text-3xl font-bold text-white">
@@ -231,7 +231,7 @@ function DashboardPage() {
             </div>
 
             {/* Large centered + button at the bottom to start recording a new map route */}
-            <div className="fixed bottom-8 left-0 right-0 flex flex-col justify-center items-center z-10 px-4">
+            <div className="fixed bottom-0 left-0 right-0 z-10 pt-16 pb-8 px-4 bg-gradient-to-t from-zinc-900 to-transparent flex flex-col justify-end items-center">
                 <Link
                     to="/dashboard/record"
                     className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-emerald-700 text-white hover:bg-emerald-600 shadow-lg hover:shadow-xl transition-all hover:scale-105"

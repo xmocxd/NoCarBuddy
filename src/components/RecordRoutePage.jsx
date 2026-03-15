@@ -1,6 +1,53 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import L from "leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+
+const DEFAULT_CENTER = [39.8283, -98.5795];
+const DEFAULT_ZOOM = 4;
+const LOCATION_ZOOM = 14;
+const OSM_TILES = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+const PIN_GREEN = "#34d399";
+const PIN_GREEN_DARK = "#059669";
+const greenPinIcon = new L.DivIcon({
+    className: "green-map-pin",
+    html: `<svg width="28" height="41" viewBox="0 0 28 41" xmlns="http://www.w3.org/2000/svg" role="img">
+        <path d="M14 0C6.268 0 0 6.268 0 14c0 10.5 14 27 14 27s14-16.5 14-27C28 6.268 21.732 0 14 0z" fill="${PIN_GREEN}" stroke="${PIN_GREEN_DARK}" stroke-width="1.5"/>
+        <circle cx="14" cy="14" r="6" fill="white" fill-opacity="0.9"/>
+    </svg>`,
+    iconSize: [28, 41],
+    iconAnchor: [14, 41],
+    popupAnchor: [0, -41],
+});
+
+/** Requests device location once, flies to it, and reports position for the pin. */
+function RecordMapLocation({ onLocationFound }) {
+    const map = useMap();
+    const doneRef = useRef(false);
+    const onFoundRef = useRef(onLocationFound);
+    onFoundRef.current = onLocationFound;
+
+    useEffect(() => {
+        if (!map || doneRef.current) return;
+
+        function onLocationFoundHandler(e) {
+            if (doneRef.current) return;
+            doneRef.current = true;
+            map.flyTo(e.latlng, LOCATION_ZOOM, { duration: 1.5 });
+            onFoundRef.current?.(e.latlng);
+        }
+
+        map.on("locationfound", onLocationFoundHandler);
+        map.locate({ setView: false, maxZoom: LOCATION_ZOOM, watch: false });
+
+        return () => map.off("locationfound", onLocationFoundHandler);
+    }, [map]);
+
+    return null;
+}
 
 /**
  * Format seconds as HH:MM:SS (e.g. 01:05:23).
@@ -39,6 +86,7 @@ function RecordRoutePage() {
     const [editingNameValue, setEditingNameValue] = useState("");
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [saving, setSaving] = useState(false);
+    const [mapPosition, setMapPosition] = useState(null);
     const timerRef = useRef(null);
     const hasAutoStartedRef = useRef(false);
     const navigate = useNavigate();
@@ -206,13 +254,33 @@ function RecordRoutePage() {
                     )}
                 </div>
 
+
                 {/* Large live timer */}
-                <div className="text-center py-8 sm:py-12">
-                    <div className="text-5xl sm:text-6xl md:text-7xl font-mono font-bold text-white tabular-nums">
+                <div className="text-center py-2">
+                    <div className="text-4xl sm:text-2xl md:text-4xl font-mono font-bold text-white tabular-nums">
                         {formatDuration(elapsedSeconds)}
                     </div>
-                    <p className="text-slate-400 text-sm mt-2">Duration</p>
                 </div>
+
+                {/* Map */}
+                <div className="w-full max-w-xl aspect-square mx-auto rounded-xl overflow-hidden border border-slate-700/80 shadow-xl mb-6">
+                    <MapContainer
+                        center={DEFAULT_CENTER}
+                        zoom={DEFAULT_ZOOM}
+                        scrollWheelZoom={true}
+                        zoomControl={false}
+                        className="h-full w-full rounded-xl z-0"
+                    >
+                        <TileLayer attribution={OSM_ATTRIBUTION} url={OSM_TILES} />
+                        <RecordMapLocation onLocationFound={setMapPosition} />
+                        {mapPosition && (
+                            <Marker position={mapPosition} icon={greenPinIcon}>
+                                <Popup>You are here</Popup>
+                            </Marker>
+                        )}
+                    </MapContainer>
+                </div>
+
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
 
@@ -225,6 +293,7 @@ function RecordRoutePage() {
                         Exit
                     </button>
                 </div>
+                
 
             </div>
         </div>
