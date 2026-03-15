@@ -184,7 +184,9 @@ function DashboardPage() {
                                                     </button>
                                                 </div>
                                             ) : (
-                                                route.name
+                                                <Link to={`/dashboard/route/${route.id}`} className="text-emerald-300 hover:text-emerald-200 hover:underline">
+                                                    {route.name}
+                                                </Link>
                                             )}
                                         </td>
                                         <td className="py-2 px-2 text-slate-300">

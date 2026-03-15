@@ -45,6 +45,32 @@ router.get('/', auth, requireUser, async function (req, res, next) {
   }
 });
 
+/** GET /map-routes/:id – Get a single map route by id. Only allowed if it belongs to the current user. */
+router.get('/:id', auth, requireUser, async function (req, res, next) {
+  await ensureSchema();
+  try {
+    const result = await query(
+      'SELECT id, user_id, name, recorded_at, location, points, duration_seconds FROM map_routes WHERE id = $1 AND user_id = $2',
+      [req.params.id, req.user.userId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Map route not found' });
+    }
+    const row = result.rows[0];
+    res.json({
+      id: row.id,
+      userId: row.user_id,
+      name: row.name,
+      recordedAt: row.recorded_at,
+      location: row.location || '',
+      points: row.points || [],
+      durationSeconds: row.duration_seconds ?? null,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 /** POST /map-routes – Create a new map route. Body: name (required), recordedAt (ISO string, optional), location, points, durationSeconds. */
 router.post('/', auth, requireUser, async function (req, res, next) {
   const { name, recordedAt, location, points, durationSeconds } = req.body || {};
