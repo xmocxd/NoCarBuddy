@@ -79,9 +79,10 @@ router.post('/', async function (req, res, next) {
     const { id: _id, state: _s, passwordSetToken: _t, passwordSetTokenExpiresAt: _e, ...rest } = user;
     const bodyForDb = { ...rest, passwordHash };
 
+    // Set state to 'active' now that the user has set their password.
     await query(
-      'UPDATE users SET body = $1 WHERE id = $2',
-      [JSON.stringify(bodyForDb), user.id]
+      'UPDATE users SET state = $1, body = $2 WHERE id = $3',
+      ['active', JSON.stringify(bodyForDb), user.id]
     );
 
     res.json({ success: true, message: 'Password set. You can now sign in.' });

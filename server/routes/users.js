@@ -29,7 +29,8 @@ function rowToUser(row) {
  * POST /users/login – Log in with email and password.
  * Body: { email, password }. We find the user by email, check that they have a password set,
  * verify the password with bcrypt, then issue a JWT and set it in an httpOnly cookie.
- * Only users who have set their password (via the email link) can log in.
+ * Only users who have set their password (via the email link) and are in active status can log in.
+ * Pending and deactivated accounts are not allowed to log in.
  */
 router.post('/login', async function (req, res, next) {
   const { email, password } = req.body || {};
@@ -39,10 +40,10 @@ router.post('/login', async function (req, res, next) {
 
   await ensureSchema();
   try {
-    // Find user by email. We need a row where body contains email and a passwordHash (they completed set-password).
+    // Find user by email: must have passwordHash and state = 'active' (no pending or deactivated).
     const result = await query(
-      'SELECT id, state, body FROM users WHERE body->>\'email\' = $1 AND body->>\'passwordHash\' IS NOT NULL',
-      [email]
+      'SELECT id, state, body FROM users WHERE body->>\'email\' = $1 AND body->>\'passwordHash\' IS NOT NULL AND state = $2',
+      [email, 'active']
     );
     if (result.rows.length === 0) {
       return res.status(401).json({ error: 'Invalid email or password' });
@@ -152,8 +153,17 @@ router.post('/', async function (req, res, next) {
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
 
-    // Merge token and expiry into body and update the user row so the link in the email can be validated later.
-    const bodyWithToken = { ...body, passwordSetToken: token, passwordSetTokenExpiresAt: expiresAt };
+    // Set an unguessable placeholder password so no one can log in with email until the user sets their password.
+    const placeholderPassword = crypto.randomBytes(64).toString('hex');
+    const placeholderHash = await bcrypt.hash(placeholderPassword, 10);
+
+    // Merge token, expiry, and placeholder password hash into body and update the user row.
+    const bodyWithToken = {
+      ...body,
+      passwordSetToken: token,
+      passwordSetTokenExpiresAt: expiresAt,
+      passwordHash: placeholderHash,
+    };
     await query(
       'UPDATE users SET body = $1 WHERE id = $2',
       [JSON.stringify(bodyWithToken), user.id]

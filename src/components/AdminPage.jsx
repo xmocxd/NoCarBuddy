@@ -36,15 +36,17 @@ function AdminPage() {
     }
 
     function deactivateUser(userId) {
-        // update user state to deactivated
-        let user = users.find(u => u.id === userId);
-        axios.put(`/api/users/${userId}`, { ...user, state: 'deactivated' })
-            .then(response => {
-                refreshUsers();
-            })
-            .catch(error => {
-                console.error('Error updating user:', error);
-            });
+        const user = users.find(u => u.id === userId);
+        axios.put(`/api/users/${userId}`, { ...user, state: 'deactivated' }, { withCredentials: true })
+            .then(() => refreshUsers())
+            .catch(error => console.error('Error deactivating user:', error));
+    }
+
+    function reactivateUser(userId) {
+        const user = users.find(u => u.id === userId);
+        axios.put(`/api/users/${userId}`, { ...user, state: 'active' }, { withCredentials: true })
+            .then(() => refreshUsers())
+            .catch(error => console.error('Error reactivating user:', error));
     }
 
     function deleteUser(userId) {
@@ -98,6 +100,7 @@ function AdminPage() {
                                 <th className="border-b border-slate-600 pb-2 px-2 text-left text-xs sm:text-sm lg:text-base">Email</th>
                                 <th className="border-b border-slate-600 pb-2 px-2 text-left text-xs sm:text-sm lg:text-base">Status</th>
                                 <th className="border-b border-slate-600 pb-2 px-2 text-left text-xs sm:text-sm lg:text-base">Deactivate</th>
+                                <th className="border-b border-slate-600 pb-2 px-2 text-left text-xs sm:text-sm lg:text-base">Reactivate</th>
                                 <th className="border-b border-slate-600 pb-2 px-2 text-left text-xs sm:text-sm lg:text-base">Delete</th>
                             </tr>
                         </thead>
@@ -120,7 +123,16 @@ function AdminPage() {
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                                 </svg>
                                             </button>
-                                        ) : ''}
+                                        ) : null}
+                                    </td>
+                                    <td className="border-b border-slate-600 py-2 px-2">
+                                        {user.state === 'deactivated' ? (
+                                            <button onClick={() => reactivateUser(user.id)} className="rounded-full bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 cursor-pointer p-1.5 sm:p-2 transition-all duration-200 hover:scale-110 transform" title="Reactivate">
+                                                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                </svg>
+                                            </button>
+                                        ) : null}
                                     </td>
                                     <td className="border-b border-slate-600 py-2 px-2">
                                         {user.state === 'deactivated' || user.state === 'pending' ? (
