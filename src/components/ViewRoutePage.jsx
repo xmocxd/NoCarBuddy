@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import L from "leaflet";
+import { MapContainer, TileLayer, Polyline, CircleMarker, useMap } from "react-leaflet";
+
+const DEFAULT_CENTER = [39.8283, -98.5795];
+const DEFAULT_ZOOM = 4;
+const OSM_TILES = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
 /**
  * Format seconds as HH:MM:SS, or "—" if null/undefined.
@@ -18,6 +25,18 @@ function formatRecordedAt(recordedAt) {
     if (!recordedAt) return "—";
     const d = new Date(recordedAt);
     return d.toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" });
+}
+
+/** Fits the map bounds to include all route points when they are available. */
+function FitRouteBounds({ points }) {
+    const map = useMap();
+    useEffect(() => {
+        if (!points || points.length === 0) return;
+        const latlngs = points.map((p) => [p.lat, p.lng]);
+        const bounds = L.latLngBounds(latlngs);
+        map.fitBounds(bounds, { padding: [24, 24], maxZoom: 16 });
+    }, [map, points]);
+    return null;
 }
 
 /**
@@ -99,6 +118,35 @@ function ViewRoutePage() {
                         <dd className="text-slate-300 mt-0.5">{pointCount}</dd>
                     </div>
                 </dl>
+
+                {/* Map: same style as record page – line + green dots, no pin on last point */}
+                <div className="w-full max-w-xl aspect-square mx-auto rounded-xl overflow-hidden border border-slate-700/80 shadow-xl my-6">
+                    <MapContainer
+                        center={DEFAULT_CENTER}
+                        zoom={DEFAULT_ZOOM}
+                        scrollWheelZoom={true}
+                        zoomControl={false}
+                        className="h-full w-full rounded-xl z-0"
+                    >
+                        <TileLayer attribution={OSM_ATTRIBUTION} url={OSM_TILES} />
+                        <FitRouteBounds points={route.points} />
+                        {Array.isArray(route.points) && route.points.length >= 2 && (
+                            <Polyline
+                                positions={route.points.map((p) => [p.lat, p.lng])}
+                                pathOptions={{ color: "#a7f3d0", weight: 5, opacity: 0.95 }}
+                            />
+                        )}
+                        {Array.isArray(route.points) &&
+                            route.points.map((pt, i) => (
+                                <CircleMarker
+                                    key={i}
+                                    center={[pt.lat, pt.lng]}
+                                    radius={3}
+                                    pathOptions={{ color: "#22c55e", fillColor: "#22c55e", fillOpacity: 1, weight: 1 }}
+                                />
+                            ))}
+                    </MapContainer>
+                </div>
 
                 <div className="mt-8">
                     <Link

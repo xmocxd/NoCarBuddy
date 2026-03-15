@@ -1,19 +1,7 @@
 #V1
 
 
-TEST USER PAGE
 
-
-- display map
-- get GPS coord -- display as coords
-- plot GPS location on map and zoom to location
-
-
-- refresh GPS location every 5 sec
-- button to manually refresh GPS location
-- plot a new point for the GPS location -- new point should have big pin, other points should be dot
-
-- a line should be drawn between each point in the sequence
 
 
 
@@ -36,6 +24,16 @@ REVISE
 
 
 
+- display map
+- get GPS coord -- display as coords
+- plot GPS location on map and zoom to location
+
+
+- refresh GPS location every 5 sec
+- button to manually refresh GPS location
+- plot a new point for the GPS location -- new point should have big pin, other points should be dot
+
+- a line should be drawn between each point in the sequence
 
 
 -------

@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import L from "leaflet";
-import { MapContainer, TileLayer, Marker, Popup, CircleMarker, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, CircleMarker, Polyline, useMap } from "react-leaflet";
 
 const DEFAULT_CENTER = [39.8283, -98.5795];
 const DEFAULT_ZOOM = 4;
@@ -82,6 +82,7 @@ function RecordRoutePage() {
     const timerRef = useRef(null);
     const gpsIntervalRef = useRef(null);
     const hasAutoStartedRef = useRef(false);
+    const pointsLogRef = useRef(null);
     const navigate = useNavigate();
 
     // Auth check on mount
@@ -234,6 +235,15 @@ function RecordRoutePage() {
         setEditingName(false);
     }
 
+    // Auto-scroll points log to bottom when it exceeds max height and new points are added
+    useEffect(() => {
+        const el = pointsLogRef.current;
+        if (!el || points.length === 0) return;
+        if (el.scrollHeight > 400) {
+            el.scrollTop = el.scrollHeight;
+        }
+    }, [points.length]);
+
     if (!allowed) {
         return (
             <div className="w-full max-w-2xl mx-auto px-4 py-4 pt-20 text-center text-slate-300">
@@ -245,13 +255,6 @@ function RecordRoutePage() {
     return (
         <div className="w-full max-w-2xl mx-auto px-4 py-4 pt-20 pb-32">
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl shadow-2xl p-6 sm:p-8 border border-slate-700">
-                <h1 className="text-xl sm:text-2xl font-bold text-white mb-2">
-                    Recording map route
-                </h1>
-                <p className="text-slate-400 text-sm mb-4">
-                    {isRecording ? "Recording in progress…" : "Recording stopped."}
-                </p>
-
                 {/* Prominent route name with edit */}
                 <div className="mb-6 p-4 rounded-lg bg-slate-700/50 border border-slate-600">
                     {editingName ? (
@@ -318,12 +321,18 @@ function RecordRoutePage() {
                     >
                         <TileLayer attribution={OSM_ATTRIBUTION} url={OSM_TILES} />
                         <FlyToFirstPosition firstPosition={points.length > 0 ? points[0] : null} />
+                        {points.length >= 2 && (
+                            <Polyline
+                                positions={points.map((p) => [p.lat, p.lng])}
+                                pathOptions={{ color: "#a7f3d0", weight: 5, opacity: 0.95 }}
+                            />
+                        )}
                         {points.slice(0, -1).map((pt, i) => (
                             <CircleMarker
                                 key={i}
                                 center={[pt.lat, pt.lng]}
-                                radius={8}
-                                pathOptions={{ color: "#22c55e", fillColor: "#22c55e", fillOpacity: 1, weight: 2 }}
+                                radius={3}
+                                pathOptions={{ color: "#22c55e", fillColor: "#22c55e", fillOpacity: 1, weight: 1 }}
                             />
                         ))}
                         {points.length > 0 && (
@@ -358,7 +367,23 @@ function RecordRoutePage() {
                         Exit
                     </button>
                 </div>
-                
+
+                {/* Point log: terminal-style list of each recorded point; scrollable when >400px, auto-scrolls to bottom */}
+                <div
+                    ref={pointsLogRef}
+                    className="mt-6 rounded-lg border border-slate-600 bg-slate-900 p-3 font-mono text-sm text-slate-300 overflow-x-auto overflow-y-auto min-w-0 max-h-[400px]"
+                >
+                    <div className="text-slate-500 mb-1">Points recorded:</div>
+                    {points.length === 0 ? (
+                        <div className="text-slate-500">(none yet)</div>
+                    ) : (
+                        <div className="space-y-0.5">
+                            {points.map((p, i) => (
+                                <div key={i} className="whitespace-nowrap">{String(i + 1).padStart(4)}  {p.lat.toFixed(6)}, {p.lng.toFixed(6)}</div>
+                            ))}
+                        </div>
+                    )}
+                </div>
 
             </div>
         </div>

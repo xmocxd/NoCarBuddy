@@ -4,10 +4,19 @@ import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 
 import auth from '../middleware/auth.js';
+import { query, ensureSchema } from '../db.js';
 
 dotenv.config();
 
 const router = express.Router();
+
+/** Require that the request has a valid admin session. */
+function requireAdmin(req, res, next) {
+  if (!req.user?.userName) {
+    return res.status(403).json({ error: 'Admin only' });
+  }
+  next();
+}
 
 let cachedAdminHash = null;
 
@@ -57,7 +66,7 @@ router.post('/login', async (req, res) => {
   res.status(200).json({ message: 'Logged in successfully' });
 });
 
-router.get('/check', auth, (req, res) => {
+router.get('/check', auth, requireAdmin, (req, res) => {
   console.log('Admin OK for user:', req.user);
   res.json({ ok: true, user: req.user });
 });
@@ -69,6 +78,21 @@ router.post('/logout', (req, res) => {
     sameSite: 'Lax'
   });
   res.status(200).json({ message: 'Logged out successfully' });
+});
+
+/** DELETE /admin/users/:id/map-routes – Clear all map routes (and points) for a user. Admin only. */
+router.delete('/users/:id/map-routes', auth, requireAdmin, async (req, res, next) => {
+  const userId = req.params.id;
+  if (!userId || !/^\d+$/.test(userId)) {
+    return res.status(400).json({ error: 'Invalid user id' });
+  }
+  await ensureSchema();
+  try {
+    await query('DELETE FROM map_routes WHERE user_id = $1', [userId]);
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
 });
 
 export default router;

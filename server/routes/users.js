@@ -209,13 +209,15 @@ router.get('/:id', auth, async function (req, res, next) {
   }
 });
 
-/* Delete a user by id – requires auth. Delete in Postgres, return deleted user (204 + body per original behavior). */
+/* Delete a user by id – requires auth. Clear their map data first, then delete user. Return deleted user (204 + body per original behavior). */
 router.delete('/:id', auth, async function (req, res, next) {
   await ensureSchema();
   try {
+    const userId = req.params.id;
+    await query('DELETE FROM map_routes WHERE user_id = $1', [userId]);
     const result = await query(
       'DELETE FROM users WHERE id = $1 RETURNING id, state, body',
-      [req.params.id]
+      [userId]
     );
     if (result.rows.length === 0) return next();
     res.status(204).json(rowToUser(result.rows[0]));

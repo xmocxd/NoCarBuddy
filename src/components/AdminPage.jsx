@@ -5,6 +5,7 @@ import axios from "axios";
 function AdminPage() {
     const [users, setUsers] = useState([]);
     const [adminStatus, setAdminStatus] = useState(false);
+    const [mapDataClearedFor, setMapDataClearedFor] = useState(null);
 
     const navigate = useNavigate();
 
@@ -50,13 +51,24 @@ function AdminPage() {
     }
 
     function deleteUser(userId) {
-        // delete user
-        axios.delete(`/api/users/${userId}`)
+        // delete user (server also clears their map data before delete)
+        axios.delete(`/api/users/${userId}`, { withCredentials: true })
             .then(() => {
                 refreshUsers();
             }).catch(error => {
                 console.error('Error deleting user:', error);
             });
+    }
+
+    function clearMapData(userId) {
+        const user = users.find(u => u.id === userId);
+        axios.delete(`/api/admin/users/${userId}/map-routes`, { withCredentials: true })
+            .then(() => {
+                refreshUsers();
+                setMapDataClearedFor({ id: userId, name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || `User ${userId}` : `User ${userId}` });
+                setTimeout(() => setMapDataClearedFor(null), 4000);
+            })
+            .catch(error => console.error('Error clearing map data:', error));
     }
 
     async function logout() {
@@ -90,6 +102,14 @@ function AdminPage() {
                     View and Modify User Accounts <span className="text-green-400 block sm:inline mt-2 sm:mt-0">{adminStatus && "-- Admin Access OK"}</span>
                 </p>
                 <p className="text-base sm:text-lg mb-4 sm:mb-8 font-bold text-amber-300">Registered Users:</p>
+                {mapDataClearedFor && (
+                    <div className="mb-4 rounded-lg bg-emerald-900/60 border border-emerald-600 text-emerald-200 px-4 py-3 flex items-center gap-2" role="status" aria-live="polite">
+                        <svg className="w-5 h-5 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Map data cleared for <strong className="text-white">{mapDataClearedFor.name}</strong></span>
+                    </div>
+                )}
                 <div className="text-sm sm:text-base lg:text-lg text-slate-300 overflow-x-auto">
                     <table className="w-full table-auto border-collapse min-w-[640px]">
                         <thead>
@@ -101,12 +121,16 @@ function AdminPage() {
                                 <th className="border-b border-slate-600 pb-2 px-2 text-left text-xs sm:text-sm lg:text-base">Status</th>
                                 <th className="border-b border-slate-600 pb-2 px-2 text-left text-xs sm:text-sm lg:text-base">Deactivate</th>
                                 <th className="border-b border-slate-600 pb-2 px-2 text-left text-xs sm:text-sm lg:text-base">Reactivate</th>
+                                <th className="border-b border-slate-600 pb-2 px-2 text-left text-xs sm:text-sm lg:text-base">Clear map data</th>
                                 <th className="border-b border-slate-600 pb-2 px-2 text-left text-xs sm:text-sm lg:text-base">Delete</th>
                             </tr>
                         </thead>
                         <tbody>
                             {users.map(user => (
-                                <tr key={user.id} className="hover:bg-slate-700">
+                                <tr
+                                    key={user.id}
+                                    className={`hover:bg-slate-700 transition-colors duration-300 ${mapDataClearedFor?.id === user.id ? 'bg-emerald-900/30' : ''}`}
+                                >
                                     <td className="border-b border-slate-600 py-2 px-2 text-xs sm:text-sm lg:text-base">{user.id}</td>
                                     <td className="border-b border-slate-600 py-2 px-2 text-xs sm:text-sm lg:text-base">{user.firstName}</td>
                                     <td className="border-b border-slate-600 py-2 px-2 text-xs sm:text-sm lg:text-base">{user.lastName}</td>
@@ -133,6 +157,13 @@ function AdminPage() {
                                                 </svg>
                                             </button>
                                         ) : null}
+                                    </td>
+                                    <td className="border-b border-slate-600 py-2 px-2">
+                                        <button onClick={() => clearMapData(user.id)} className="rounded-full bg-amber-600 text-white hover:bg-amber-700 active:bg-amber-800 cursor-pointer p-1.5 sm:p-2 transition-all duration-200 hover:scale-110 transform" title="Clear map data">
+                                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                            </svg>
+                                        </button>
                                     </td>
                                     <td className="border-b border-slate-600 py-2 px-2">
                                         {user.state === 'deactivated' || user.state === 'pending' ? (
