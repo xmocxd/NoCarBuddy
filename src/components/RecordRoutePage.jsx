@@ -27,20 +27,20 @@ function getAutoRouteName(fromDate) {
 }
 
 /**
- * Record map route page: auto-starts recording on load, shows a live timer, and provides
- * Stop and Exit. Both open a naming dialog; saving uses the auto name first, then optionally
- * updates the name via a second API call. Stop keeps you on the page; Exit returns to dashboard.
+ * Record map route page: auto-starts recording on load, shows a live timer and route name.
+ * Stop and Exit save with the current (auto or edited) name; no prompt. Stop keeps you on the page; Exit returns to dashboard.
  */
 function RecordRoutePage() {
     const [allowed, setAllowed] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [recordingStartedAt, setRecordingStartedAt] = useState(null);
+    const [routeName, setRouteName] = useState("");
+    const [editingName, setEditingName] = useState(false);
+    const [editingNameValue, setEditingNameValue] = useState("");
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [dialogAction, setDialogAction] = useState(null); // 'stop' | 'exit'
-    const [dialogName, setDialogName] = useState("");
     const [saving, setSaving] = useState(false);
     const timerRef = useRef(null);
+    const hasAutoStartedRef = useRef(false);
     const navigate = useNavigate();
 
     // Auth check on mount
@@ -55,11 +55,13 @@ function RecordRoutePage() {
             });
     }, [navigate]);
 
-    // Auto-start recording when page is allowed and we're not already in a recording state
+    // Auto-start recording once when page becomes allowed (ref prevents re-run from clearing the interval)
     useEffect(() => {
-        if (!allowed || recordingStartedAt !== null) return;
+        if (!allowed || hasAutoStartedRef.current) return;
+        hasAutoStartedRef.current = true;
         const start = Date.now();
         setRecordingStartedAt(start);
+        setRouteName(getAutoRouteName(new Date(start)));
         setIsRecording(true);
         setElapsedSeconds(0);
 
@@ -68,9 +70,12 @@ function RecordRoutePage() {
         }, 1000);
 
         return () => {
-            if (timerRef.current) clearInterval(timerRef.current);
+            if (timerRef.current) {
+                clearInterval(timerRef.current);
+                timerRef.current = null;
+            }
         };
-    }, [allowed, recordingStartedAt]);
+    }, [allowed]);
 
     // When we stop the timer (user clicked Stop or Exit), clear the interval and freeze elapsed
     function stopTimer() {
@@ -81,47 +86,18 @@ function RecordRoutePage() {
         setIsRecording(false);
     }
 
-    function openNameDialog(action) {
-        setDialogAction(action);
-        setDialogName("");
-        setDialogOpen(true);
-    }
-
-    function closeDialog(cancel) {
-        setDialogOpen(false);
-        setDialogAction(null);
-        if (cancel && dialogAction === "stop") {
-            // Resume recording: restart timer from current elapsed
-            const start = Date.now() - elapsedSeconds * 1000;
-            setRecordingStartedAt(start);
-            setIsRecording(true);
-            timerRef.current = setInterval(() => {
-                setElapsedSeconds(Math.floor((Date.now() - start) / 1000));
-            }, 1000);
-        }
-    }
-
-    function handleStopRecording() {
-        stopTimer();
-        openNameDialog("stop");
-    }
-
-    function handleExit() {
-        stopTimer();
-        openNameDialog("exit");
-    }
-
-    async function saveAndMaybeNavigate(customName) {
+    async function saveRoute(action) {
         if (saving) return;
         setSaving(true);
         const startTime = recordingStartedAt ? new Date(recordingStartedAt) : new Date();
-        const autoName = getAutoRouteName(startTime);
+        const rawName = editingName ? editingNameValue.trim() : (routeName && routeName.trim());
+        const nameToSave = rawName || getAutoRouteName(startTime);
 
         try {
-            const createRes = await axios.post(
+            await axios.post(
                 "/api/map-routes",
                 {
-                    name: autoName,
+                    name: nameToSave,
                     recordedAt: startTime.toISOString(),
                     location: "",
                     points: [],
@@ -129,25 +105,15 @@ function RecordRoutePage() {
                 },
                 { withCredentials: true }
             );
-            const routeId = createRes.data.id;
 
-            if (customName && customName.trim()) {
-                await axios.put(
-                    `/api/map-routes/${routeId}`,
-                    { name: customName.trim() },
-                    { withCredentials: true }
-                );
-            }
-
-            if (dialogAction === "exit") {
+            if (action === "exit") {
                 navigate("/dashboard/", { replace: true });
             } else {
-                closeDialog(false);
                 setRecordingStartedAt(null);
+                setRouteName("");
+                setEditingName(false);
                 setElapsedSeconds(0);
                 setSaving(false);
-                // Optionally start a new recording automatically; for now we just stay on page with timer at 0
-                // and user can go back via link. Or we could auto-restart. User said "stop stays on the page" - so we stay.
             }
         } catch (err) {
             console.error("Failed to save map route:", err);
@@ -155,16 +121,24 @@ function RecordRoutePage() {
         }
     }
 
-    function handleDialogOk() {
-        saveAndMaybeNavigate(dialogName.trim() || null);
+    function handleExit() {
+        stopTimer();
+        saveRoute("exit");
     }
 
-    function handleDialogCancel() {
-        if (dialogAction === "exit") {
-            saveAndMaybeNavigate(null);
-        } else {
-            closeDialog(true);
-        }
+    function startEditName() {
+        setEditingNameValue(routeName);
+        setEditingName(true);
+    }
+
+    function saveEditName() {
+        const trimmed = editingNameValue.trim();
+        if (trimmed) setRouteName(trimmed);
+        setEditingName(false);
+    }
+
+    function cancelEditName() {
+        setEditingName(false);
     }
 
     if (!allowed) {
@@ -181,9 +155,56 @@ function RecordRoutePage() {
                 <h1 className="text-xl sm:text-2xl font-bold text-white mb-2">
                     Recording map route
                 </h1>
-                <p className="text-slate-400 text-sm mb-8">
+                <p className="text-slate-400 text-sm mb-4">
                     {isRecording ? "Recording in progress…" : "Recording stopped."}
                 </p>
+
+                {/* Prominent route name with edit */}
+                <div className="mb-6 p-4 rounded-lg bg-slate-700/50 border border-slate-600">
+                    {editingName ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                            <input
+                                type="text"
+                                value={editingNameValue}
+                                onChange={(e) => setEditingNameValue(e.target.value)}
+                                placeholder="Route name"
+                                className="flex-1 min-w-[200px] p-2 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-500 focus:outline-none focus:border-slate-500"
+                                autoFocus
+                            />
+                            <button
+                                type="button"
+                                onClick={saveEditName}
+                                className="rounded-lg bg-emerald-700 text-white hover:bg-emerald-600 py-2 px-4 font-semibold"
+                            >
+                                Save
+                            </button>
+                            <button
+                                type="button"
+                                onClick={cancelEditName}
+                                className="rounded-lg bg-slate-600 text-white hover:bg-slate-500 py-2 px-4 font-semibold"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-between gap-2">
+                            <span className="text-lg sm:text-xl font-semibold text-white break-words">
+                                {routeName || "Unnamed route"}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={startEditName}
+                                className="shrink-0 rounded p-2 text-slate-400 hover:text-emerald-400 hover:bg-slate-600"
+                                title="Edit route name"
+                                aria-label="Edit route name"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                            </button>
+                        </div>
+                    )}
+                </div>
 
                 {/* Large live timer */}
                 <div className="text-center py-8 sm:py-12">
@@ -194,14 +215,7 @@ function RecordRoutePage() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <button
-                        type="button"
-                        onClick={handleStopRecording}
-                        disabled={!isRecording || saving}
-                        className="rounded-lg bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed py-3 px-6 font-semibold"
-                    >
-                        Stop recording
-                    </button>
+
                     <button
                         type="button"
                         onClick={handleExit}
@@ -212,60 +226,7 @@ function RecordRoutePage() {
                     </button>
                 </div>
 
-                <p className="mt-8 text-center">
-                    <Link to="/dashboard/" className="text-slate-400 hover:text-white text-sm">
-                        Back to Dashboard
-                    </Link>
-                </p>
             </div>
-
-            {/* Name dialog: OK, Cancel, X (same as Cancel) */}
-            {dialogOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" aria-modal="true" role="dialog">
-                    <div className="bg-slate-800 rounded-xl shadow-2xl border border-slate-600 w-full max-w-md overflow-hidden">
-                        <div className="flex items-center justify-between p-4 border-b border-slate-600">
-                            <h2 className="text-lg font-semibold text-white">Name your map route</h2>
-                            <button
-                                type="button"
-                                onClick={() => handleDialogCancel()}
-                                className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-700"
-                                aria-label="Close"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-                        <div className="p-4">
-                            <input
-                                type="text"
-                                value={dialogName}
-                                onChange={(e) => setDialogName(e.target.value)}
-                                placeholder="Optional custom name"
-                                className="w-full p-3 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-500 focus:outline-none focus:border-slate-500"
-                                autoFocus
-                            />
-                        </div>
-                        <div className="flex justify-end gap-2 p-4 border-t border-slate-600">
-                            <button
-                                type="button"
-                                onClick={handleDialogCancel}
-                                className="rounded-lg bg-slate-600 text-white hover:bg-slate-500 py-2 px-4 font-semibold"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleDialogOk}
-                                disabled={saving}
-                                className="rounded-lg bg-slate-600 text-white hover:bg-slate-500 disabled:opacity-50 py-2 px-4 font-semibold"
-                            >
-                                {saving ? "Saving…" : "OK"}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

@@ -173,9 +173,11 @@ router.post('/', async function (req, res, next) {
     const lat = 37 + Math.random() * 2;
     const lng = -122 + Math.random() * 2;
     const testPoints = JSON.stringify([{ lat, lng }]);
+    // Random duration between 2 and 35 minutes (in seconds) for the sample route
+    const durationSeconds = Math.floor(120 + Math.random() * (2100 - 120));
     await query(
-      'INSERT INTO map_routes (user_id, name, recorded_at, location, points) VALUES ($1, $2, now(), $3, $4)',
-      [user.id, 'Sample map route', 'Sample location', testPoints]
+      'INSERT INTO map_routes (user_id, name, recorded_at, location, points, duration_seconds) VALUES ($1, $2, now(), $3, $4, $5)',
+      [user.id, 'Sample map route', 'Sample location', testPoints, durationSeconds]
     );
 
     // Return the user without the token in the response (the token is only in the email).

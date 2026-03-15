@@ -87,6 +87,16 @@ function DashboardPage() {
         });
     }
 
+    /** Format seconds as HH:MM:SS (e.g. 01:05:23), or "—" if null/undefined. */
+    function formatDuration(seconds) {
+        if (seconds == null || typeof seconds !== "number" || seconds < 0) return "—";
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
+        const pad = (n) => String(n).padStart(2, "0");
+        return `${pad(h)}:${pad(m)}:${pad(s)}`;
+    }
+
     if (loading) {
         return (
             <div className="w-full max-w-4xl mx-auto px-4 py-4 pt-20">
@@ -134,6 +144,7 @@ function DashboardPage() {
                             <tr className="border-b border-slate-600">
                                 <th className="text-left py-2 px-2 text-slate-300 font-semibold">Route name</th>
                                 <th className="text-left py-2 px-2 text-slate-300 font-semibold">Time/date recorded</th>
+                                <th className="text-left py-2 px-2 text-slate-300 font-semibold">Duration</th>
                                 <th className="text-left py-2 px-2 text-slate-300 font-semibold">Location recorded</th>
                                 <th className="text-left py-2 px-2 text-slate-300 font-semibold w-20">Edit</th>
                                 <th className="text-left py-2 px-2 text-slate-300 font-semibold w-20">Delete</th>
@@ -142,7 +153,7 @@ function DashboardPage() {
                         <tbody>
                             {mapRoutes.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="py-6 text-slate-400 text-center">
+                                    <td colSpan={6} className="py-6 text-slate-400 text-center">
                                         No routes yet. Tap the + button below to record one.
                                     </td>
                                 </tr>
@@ -178,6 +189,9 @@ function DashboardPage() {
                                         </td>
                                         <td className="py-2 px-2 text-slate-300">
                                             {formatRecordedAt(route.recordedAt)}
+                                        </td>
+                                        <td className="py-2 px-2 text-slate-300 font-mono tabular-nums">
+                                            {formatDuration(route.durationSeconds)}
                                         </td>
                                         <td className="py-2 px-2 text-slate-300">
                                             {route.location || "—"}
@@ -215,7 +229,7 @@ function DashboardPage() {
             </div>
 
             {/* Large centered + button at the bottom to start recording a new map route */}
-            <div className="fixed bottom-8 left-0 right-0 flex justify-center z-10 px-4">
+            <div className="fixed bottom-8 left-0 right-0 flex flex-col justify-center items-center z-10 px-4">
                 <Link
                     to="/dashboard/record"
                     className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-emerald-700 text-white hover:bg-emerald-600 shadow-lg hover:shadow-xl transition-all hover:scale-105"
@@ -225,6 +239,9 @@ function DashboardPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
                 </Link>
+                <p className="text-left py-2 px-2 text-slate-300 font-semibold">
+                    Record New Route
+                </p>
             </div>
         </div>
     );
