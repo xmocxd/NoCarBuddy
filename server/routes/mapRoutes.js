@@ -106,6 +106,83 @@ router.post('/', auth, requireUser, async function (req, res, next) {
   }
 });
 
+/** PATCH /map-routes/:id/points – Append one point to the route. Body: { lat, lng }. */
+router.patch('/:id/points', auth, requireUser, async function (req, res, next) {
+  const routeId = req.params.id;
+  const { lat, lng } = req.body || {};
+  const latNum = lat != null ? Number(lat) : NaN;
+  const lngNum = lng != null ? Number(lng) : NaN;
+  if (Number.isNaN(latNum) || Number.isNaN(lngNum)) {
+    return res.status(400).json({ error: 'lat and lng are required numbers' });
+  }
+
+  await ensureSchema();
+  try {
+    const result = await query(
+      'SELECT id, points FROM map_routes WHERE id = $1 AND user_id = $2',
+      [routeId, req.user.userId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Map route not found' });
+    }
+    const currentPoints = result.rows[0].points || [];
+    const updatedPoints = [...currentPoints, { lat: latNum, lng: lngNum }];
+    await query(
+      'UPDATE map_routes SET points = $1 WHERE id = $2 AND user_id = $3',
+      [JSON.stringify(updatedPoints), routeId, req.user.userId]
+    );
+    res.json({ points: updatedPoints });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** PATCH /map-routes/:id – Update map route duration and/or name (e.g. when recording stops). Body: { durationSeconds?, name? }. */
+router.patch('/:id', auth, requireUser, async function (req, res, next) {
+  const routeId = req.params.id;
+  const { durationSeconds, name } = req.body || {};
+  const durationVal = durationSeconds != null && Number.isInteger(Number(durationSeconds)) ? Number(durationSeconds) : null;
+  const nameVal = name != null && typeof name === 'string' && name.trim() !== '' ? name.trim() : null;
+
+  await ensureSchema();
+  try {
+    const updates = [];
+    const values = [];
+    let i = 1;
+    if (durationVal !== null) {
+      updates.push(`duration_seconds = $${i++}`);
+      values.push(durationVal);
+    }
+    if (nameVal !== null) {
+      updates.push(`name = $${i++}`);
+      values.push(nameVal);
+    }
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'At least one of durationSeconds or name is required' });
+    }
+    values.push(routeId, req.user.userId);
+    const result = await query(
+      `UPDATE map_routes SET ${updates.join(', ')} WHERE id = $${i++} AND user_id = $${i} RETURNING id, user_id, name, recorded_at, location, points, duration_seconds`,
+      values
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Map route not found' });
+    }
+    const row = result.rows[0];
+    res.json({
+      id: row.id,
+      userId: row.user_id,
+      name: row.name,
+      recordedAt: row.recorded_at,
+      location: row.location || '',
+      points: row.points || [],
+      durationSeconds: row.duration_seconds ?? null,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 /** PUT /map-routes/:id – Update map route name. Only allowed if the map route belongs to the current user. */
 router.put('/:id', auth, requireUser, async function (req, res, next) {
   const { name } = req.body || {};

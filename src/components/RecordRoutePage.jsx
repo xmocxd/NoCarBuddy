@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import L from "leaflet";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, CircleMarker, useMap } from "react-leaflet";
 
 const DEFAULT_CENTER = [39.8283, -98.5795];
 const DEFAULT_ZOOM = 4;
@@ -23,29 +23,17 @@ const greenPinIcon = new L.DivIcon({
     popupAnchor: [0, -41],
 });
 
-/** Requests device location once, flies to it, and reports position for the pin. */
-function RecordMapLocation({ onLocationFound }) {
+const GPS_POLL_INTERVAL_MS = 5000;
+
+/** Flies the map to the first position once when it becomes available. */
+function FlyToFirstPosition({ firstPosition }) {
     const map = useMap();
-    const doneRef = useRef(false);
-    const onFoundRef = useRef(onLocationFound);
-    onFoundRef.current = onLocationFound;
-
+    const hasFlownRef = useRef(false);
     useEffect(() => {
-        if (!map || doneRef.current) return;
-
-        function onLocationFoundHandler(e) {
-            if (doneRef.current) return;
-            doneRef.current = true;
-            map.flyTo(e.latlng, LOCATION_ZOOM, { duration: 1.5 });
-            onFoundRef.current?.(e.latlng);
-        }
-
-        map.on("locationfound", onLocationFoundHandler);
-        map.locate({ setView: false, maxZoom: LOCATION_ZOOM, watch: false });
-
-        return () => map.off("locationfound", onLocationFoundHandler);
-    }, [map]);
-
+        if (!firstPosition || !map || hasFlownRef.current) return;
+        hasFlownRef.current = true;
+        map.flyTo(firstPosition, LOCATION_ZOOM, { duration: 1.5 });
+    }, [map, firstPosition]);
     return null;
 }
 
@@ -86,8 +74,13 @@ function RecordRoutePage() {
     const [editingNameValue, setEditingNameValue] = useState("");
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [saving, setSaving] = useState(false);
-    const [mapPosition, setMapPosition] = useState(null);
+    const [routeId, setRouteId] = useState(null);
+    const [points, setPoints] = useState([]);
+    // TEST FUNCTIONALITY - TO REMOVE: toggle to randomly offset GPS for testing
+    const [testMoveGpsEnabled, setTestMoveGpsEnabled] = useState(false);
+    const testGpsFetchCountRef = useRef(0);
     const timerRef = useRef(null);
+    const gpsIntervalRef = useRef(null);
     const hasAutoStartedRef = useRef(false);
     const navigate = useNavigate();
 
@@ -103,7 +96,7 @@ function RecordRoutePage() {
             });
     }, [navigate]);
 
-    // Auto-start recording once when page becomes allowed (ref prevents re-run from clearing the interval)
+    // Auto-start recording once when page becomes allowed: create route and start timer
     useEffect(() => {
         if (!allowed || hasAutoStartedRef.current) return;
         hasAutoStartedRef.current = true;
@@ -117,6 +110,21 @@ function RecordRoutePage() {
             setElapsedSeconds((prev) => Math.floor((Date.now() - start) / 1000) || prev + 1);
         }, 1000);
 
+        axios
+            .post(
+                "/api/map-routes",
+                {
+                    name: getAutoRouteName(new Date(start)),
+                    recordedAt: new Date(start).toISOString(),
+                    location: "",
+                    points: [],
+                    durationSeconds: null,
+                },
+                { withCredentials: true }
+            )
+            .then((res) => setRouteId(res.data.id))
+            .catch((err) => console.error("Failed to create map route:", err));
+
         return () => {
             if (timerRef.current) {
                 clearInterval(timerRef.current);
@@ -124,6 +132,54 @@ function RecordRoutePage() {
             }
         };
     }, [allowed]);
+
+    // GPS poll every 5 seconds (and once on start): append point to route when we have routeId
+    useEffect(() => {
+        if (!routeId || !isRecording) return;
+
+        function addPoint(lat, lng) {
+            axios
+                .patch(
+                    `/api/map-routes/${routeId}/points`,
+                    { lat, lng },
+                    { withCredentials: true }
+                )
+                .then(() => setPoints((prev) => [...prev, { lat, lng }]))
+                .catch((err) => console.error("Failed to add route point:", err));
+        }
+
+        function fetchLocation() {
+            if (!navigator.geolocation) return;
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    let lat = pos.coords.latitude;
+                    let lng = pos.coords.longitude;
+                    // TEST FUNCTIONALITY - TO REMOVE: when enabled, offset coords for testing; base amount increases each fetch, random within same range
+                    if (testMoveGpsEnabled) {
+                        const count = testGpsFetchCountRef.current;
+                        testGpsFetchCountRef.current += 1;
+                        const baseDegrees = 0.00005 * (1 + count);
+                        const range = baseDegrees;
+                        lat += (Math.random() * 2 - 1) * range;
+                        lng += (Math.random() * 2 - 1) * range;
+                    }
+                    addPoint(lat, lng);
+                },
+                (err) => console.warn("Geolocation error:", err.message),
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+
+        fetchLocation();
+        gpsIntervalRef.current = setInterval(fetchLocation, GPS_POLL_INTERVAL_MS);
+
+        return () => {
+            if (gpsIntervalRef.current) {
+                clearInterval(gpsIntervalRef.current);
+                gpsIntervalRef.current = null;
+            }
+        };
+    }, [routeId, isRecording, testMoveGpsEnabled]);
 
     // When we stop the timer (user clicked Stop or Exit), clear the interval and freeze elapsed
     function stopTimer() {
@@ -137,30 +193,19 @@ function RecordRoutePage() {
     async function saveRoute(action) {
         if (saving) return;
         setSaving(true);
-        const startTime = recordingStartedAt ? new Date(recordingStartedAt) : new Date();
-        const rawName = editingName ? editingNameValue.trim() : (routeName && routeName.trim());
-        const nameToSave = rawName || getAutoRouteName(startTime);
-
         try {
-            await axios.post(
-                "/api/map-routes",
-                {
-                    name: nameToSave,
-                    recordedAt: startTime.toISOString(),
-                    location: "",
-                    points: [],
-                    durationSeconds: elapsedSeconds,
-                },
-                { withCredentials: true }
-            );
-
+            if (routeId) {
+                const rawName = editingName ? editingNameValue.trim() : (routeName && routeName.trim());
+                const nameToSave = rawName || getAutoRouteName(recordingStartedAt ? new Date(recordingStartedAt) : new Date());
+                await axios.patch(
+                    `/api/map-routes/${routeId}`,
+                    { durationSeconds: elapsedSeconds, name: nameToSave },
+                    { withCredentials: true }
+                );
+            }
             if (action === "exit") {
                 navigate("/dashboard/", { replace: true });
             } else {
-                setRecordingStartedAt(null);
-                setRouteName("");
-                setEditingName(false);
-                setElapsedSeconds(0);
                 setSaving(false);
             }
         } catch (err) {
@@ -272,9 +317,17 @@ function RecordRoutePage() {
                         className="h-full w-full rounded-xl z-0"
                     >
                         <TileLayer attribution={OSM_ATTRIBUTION} url={OSM_TILES} />
-                        <RecordMapLocation onLocationFound={setMapPosition} />
-                        {mapPosition && (
-                            <Marker position={mapPosition} icon={greenPinIcon}>
+                        <FlyToFirstPosition firstPosition={points.length > 0 ? points[0] : null} />
+                        {points.slice(0, -1).map((pt, i) => (
+                            <CircleMarker
+                                key={i}
+                                center={[pt.lat, pt.lng]}
+                                radius={8}
+                                pathOptions={{ color: "#22c55e", fillColor: "#22c55e", fillOpacity: 1, weight: 2 }}
+                            />
+                        ))}
+                        {points.length > 0 && (
+                            <Marker position={[points[points.length - 1].lat, points[points.length - 1].lng]} icon={greenPinIcon}>
                                 <Popup>You are here</Popup>
                             </Marker>
                         )}
@@ -282,8 +335,20 @@ function RecordRoutePage() {
                 </div>
 
 
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center flex-wrap">
+                    {/* TEST FUNCTIONALITY - TO REMOVE: button to toggle test GPS offset */}
+                    <button
+                        type="button"
+                        onClick={() => setTestMoveGpsEnabled((on) => !on)}
+                        className={`rounded-lg py-3 px-6 font-semibold border-2 ${
+                            testMoveGpsEnabled
+                                ? "bg-amber-600 border-amber-500 text-white hover:bg-amber-500"
+                                : "bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600"
+                        }`}
+                        title={testMoveGpsEnabled ? "Test move GPS is ON – coords are offset" : "Toggle test GPS offset (for testing only)"}
+                    >
+                        TEST MOVE GPS {testMoveGpsEnabled ? "ON" : ""}
+                    </button>
                     <button
                         type="button"
                         onClick={handleExit}
