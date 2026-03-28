@@ -17,7 +17,6 @@ The dashboard is the first page shown after a user logs in. It lists the user’
   - **Route name** – Clickable link to the “view route” page (`/dashboard/route/:id`).
   - **Time/date recorded** – When the route was recorded (short date and time).
   - **Duration** – Recording length in `HH:MM:SS` (from `durationSeconds` in the DB).
-  - **Location recorded** – Optional location text (often empty for now).
   - **Edit** – Pencil button to inline-edit the route name (Save/Cancel).
   - **Delete** – Trash button; confirms then deletes the route.
 - **Record New Route** – A large “+” button at the bottom that links to `/dashboard/record` to start a new recording.
@@ -60,7 +59,6 @@ The record page sends a single `POST /api/map-routes` with:
 
 - `name` – The displayed route name (auto or user-edited).
 - `recordedAt` – ISO timestamp (from when recording started).
-- `location` – Empty string for now.
 - `points` – Empty array for now (future: GPS points).
 - `durationSeconds` – Elapsed seconds when Stop or Exit was clicked.
 
@@ -69,7 +67,7 @@ The backend stores this in the `map_routes` table (see [database.md](database.md
 ### Implementation
 
 - **Frontend**: `src/components/RecordRoutePage.jsx`. Auth check on mount; a ref (`hasAutoStartedRef`) ensures the timer starts only once. Route name state is `routeName`; optional inline edit uses `editingName` and `editingNameValue`. `saveRoute('stop')` or `saveRoute('exit')` posts to the API and then either resets local state or navigates.
-- **Backend**: `server/routes/mapRoutes.js` – `POST /map-routes` accepts `name`, `recordedAt`, `location`, `points`, `durationSeconds` and inserts a row scoped to the current user.
+- **Backend**: `server/routes/mapRoutes.js` – `POST /map-routes` accepts `name`, `recordedAt`, `points`, `durationSeconds` and inserts a row scoped to the current user.
 
 ---
 
@@ -85,7 +83,7 @@ From the dashboard, the user can click a route’s **name** to open a “view ro
 |------|----------------|
 | 1. Open view page | User clicks a route name on the dashboard, which links to `/dashboard/route/:id`. The view page reads `id` from the URL. |
 | 2. Load route | The page calls `GET /api/map-routes/:id` with credentials. The API returns the route only if it belongs to the current user; otherwise 404. |
-| 3. Display or error | If the route is found, the page shows: name, recorded at (date/time), duration (HH:MM:SS), location, and number of points recorded. If the request fails (e.g. 404 or 401), an error message is shown and a “Back to Dashboard” link is still available. 401/403 trigger redirect to login. |
+| 3. Display or error | If the route is found, the page shows: name, recorded at (date/time), duration (HH:MM:SS), and number of points recorded. If the request fails (e.g. 404 or 401), an error message is shown and a “Back to Dashboard” link is still available. 401/403 trigger redirect to login. |
 
 ### APIs used
 
@@ -96,7 +94,7 @@ From the dashboard, the user can click a route’s **name** to open a “view ro
 ### Implementation
 
 - **Frontend**: `src/components/ViewRoutePage.jsx`. Uses `useParams()` for `id`, fetches with `GET /api/map-routes/${id}`. Renders a definition list of route fields and a “Back to Dashboard” link to `/dashboard/`.
-- **Backend**: `server/routes/mapRoutes.js` – `GET /map-routes/:id` selects the row where `id = :id` and `user_id = req.user.userId`, returns the same shape as list items (id, userId, name, recordedAt, location, points, durationSeconds).
+- **Backend**: `server/routes/mapRoutes.js` – `GET /map-routes/:id` selects the row where `id = :id` and `user_id = req.user.userId`, returns the same shape as list items (id, userId, name, recordedAt, points, durationSeconds, and metrics when present).
 
 ---
 

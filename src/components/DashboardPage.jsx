@@ -4,7 +4,7 @@ import axios from "axios";
 
 /**
  * Dashboard: first page shown after login. Lists the user's recorded map routes in a table
- * (name, date/time, location, edit, delete) and has a large centered "+" button at the
+ * (name, date/time, duration, edit, delete) and has a large centered "+" button at the
  * bottom to start recording a new map route (goes to a dedicated recording page).
  */
 function DashboardPage() {
@@ -145,7 +145,6 @@ function DashboardPage() {
                                 <th className="text-left py-2 px-2 text-slate-300 font-semibold">Route name</th>
                                 <th className="text-left py-2 px-2 text-slate-300 font-semibold">Time/date recorded</th>
                                 <th className="text-left py-2 px-2 text-slate-300 font-semibold">Duration</th>
-                                <th className="text-left py-2 px-2 text-slate-300 font-semibold">Location recorded</th>
                                 <th className="text-left py-2 px-2 text-slate-300 font-semibold w-20">Edit</th>
                                 <th className="text-left py-2 px-2 text-slate-300 font-semibold w-20">Delete</th>
                             </tr>
@@ -153,7 +152,7 @@ function DashboardPage() {
                         <tbody>
                             {mapRoutes.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="py-6 text-slate-400 text-center">
+                                    <td colSpan={5} className="py-6 text-slate-400 text-center">
                                         No routes yet. Tap the + button below to record one.
                                     </td>
                                 </tr>
@@ -194,9 +193,6 @@ function DashboardPage() {
                                         </td>
                                         <td className="py-2 px-2 text-slate-300 font-mono tabular-nums">
                                             {formatDuration(route.durationSeconds)}
-                                        </td>
-                                        <td className="py-2 px-2 text-slate-300">
-                                            {route.location || "—"}
                                         </td>
                                         <td className="py-2 px-2">
                                             {editingId === route.id ? null : (

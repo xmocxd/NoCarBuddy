@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import L from "leaflet";
 import { MapContainer, TileLayer, Polyline, CircleMarker, useMap } from "react-leaflet";
+import { computeRouteMetrics, formatDistance, formatPaceSecondsPerMi, STEPS_PER_HOUR } from "../utils/routeMetrics.js";
 
 const DEFAULT_CENTER = [39.8283, -98.5795];
 const DEFAULT_ZOOM = 4;
@@ -65,6 +66,31 @@ function ViewRoutePage() {
             .finally(() => setLoading(false));
     }, [id, navigate]);
 
+    const displayMetrics = useMemo(() => {
+        if (!route) {
+            return { distanceMeters: 0, estimatedSteps: 0, paceSecondsPerMi: null };
+        }
+        if (
+            route.distanceMeters != null &&
+            Number.isFinite(Number(route.distanceMeters)) &&
+            route.estimatedSteps != null &&
+            Number.isFinite(Number(route.estimatedSteps))
+        ) {
+            let pace = null;
+            if (route.paceSecondsPerMi != null && Number.isFinite(Number(route.paceSecondsPerMi))) {
+                pace = Number(route.paceSecondsPerMi);
+            } else if (route.paceSecondsPerKm != null && Number.isFinite(Number(route.paceSecondsPerKm))) {
+                pace = Number(route.paceSecondsPerKm) * (1609.344 / 1000);
+            }
+            return {
+                distanceMeters: Number(route.distanceMeters),
+                estimatedSteps: Math.round(Number(route.estimatedSteps)),
+                paceSecondsPerMi: pace,
+            };
+        }
+        return computeRouteMetrics(route.points || [], route.durationSeconds ?? 0);
+    }, [route]);
+
     if (loading) {
         return (
             <div className="w-full max-w-2xl mx-auto px-4 py-4 pt-20 text-center text-slate-300">
@@ -92,32 +118,22 @@ function ViewRoutePage() {
     return (
         <div className="w-full max-w-2xl mx-auto px-4 py-4 pt-20 pb-32">
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl shadow-2xl p-6 sm:p-8 border border-slate-700">
+                <div className="mb-6 -mt-1">
+                    <button
+                        type="button"
+                        onClick={() => navigate("/dashboard/", { replace: true })}
+                        className="rounded-lg bg-slate-600 text-white hover:bg-slate-500 py-2.5 px-4 font-semibold inline-flex items-center gap-2"
+                        aria-label="Back to dashboard"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Back
+                    </button>
+                </div>
                 <h1 className="text-xl sm:text-2xl font-bold text-white mb-6">
                     View route
                 </h1>
-
-                <dl className="space-y-4 text-sm sm:text-base">
-                    <div>
-                        <dt className="text-slate-400 font-medium">Name</dt>
-                        <dd className="text-white font-semibold mt-0.5">{route.name}</dd>
-                    </div>
-                    <div>
-                        <dt className="text-slate-400 font-medium">Recorded at</dt>
-                        <dd className="text-slate-300 mt-0.5">{formatRecordedAt(route.recordedAt)}</dd>
-                    </div>
-                    <div>
-                        <dt className="text-slate-400 font-medium">Duration</dt>
-                        <dd className="text-slate-300 font-mono tabular-nums mt-0.5">{formatDuration(route.durationSeconds)}</dd>
-                    </div>
-                    <div>
-                        <dt className="text-slate-400 font-medium">Location</dt>
-                        <dd className="text-slate-300 mt-0.5">{route.location || "—"}</dd>
-                    </div>
-                    <div>
-                        <dt className="text-slate-400 font-medium">Points recorded</dt>
-                        <dd className="text-slate-300 mt-0.5">{pointCount}</dd>
-                    </div>
-                </dl>
 
                 {/* Map: same style as record page – line + green dots, no pin on last point */}
                 <div className="w-full max-w-xl aspect-square mx-auto rounded-xl overflow-hidden border border-slate-700/80 shadow-xl my-6">
@@ -147,6 +163,41 @@ function ViewRoutePage() {
                             ))}
                     </MapContainer>
                 </div>
+
+                <dl className="space-y-4 text-sm sm:text-base">
+                    <div>
+                        <dt className="text-slate-400 font-medium">Name</dt>
+                        <dd className="text-white font-semibold mt-0.5">{route.name}</dd>
+                    </div>
+                    <div>
+                        <dt className="text-slate-400 font-medium">Recorded at</dt>
+                        <dd className="text-slate-300 mt-0.5">{formatRecordedAt(route.recordedAt)}</dd>
+                    </div>
+                    <div>
+                        <dt className="text-slate-400 font-medium">Duration</dt>
+                        <dd className="text-slate-300 font-mono tabular-nums mt-0.5">{formatDuration(route.durationSeconds)}</dd>
+                    </div>
+                    <div>
+                        <dt className="text-slate-400 font-medium">Distance</dt>
+                        <dd className="text-slate-300 font-mono tabular-nums mt-0.5">{formatDistance(displayMetrics.distanceMeters)}</dd>
+                    </div>
+                    <div>
+                        <dt className="text-slate-400 font-medium">Est. steps ({STEPS_PER_HOUR.toLocaleString()}/h)</dt>
+                        <dd className="text-slate-300 font-mono tabular-nums mt-0.5">
+                            {displayMetrics.estimatedSteps.toLocaleString()}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt className="text-slate-400 font-medium">Pace</dt>
+                        <dd className="text-slate-300 font-mono tabular-nums mt-0.5">
+                            {formatPaceSecondsPerMi(displayMetrics.paceSecondsPerMi)}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt className="text-slate-400 font-medium">Points recorded</dt>
+                        <dd className="text-slate-300 mt-0.5">{pointCount}</dd>
+                    </div>
+                </dl>
 
                 <div className="mt-8">
                     <Link

@@ -1,13 +1,14 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import L from "leaflet";
 import NoSleep from "nosleep.js";
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker, Polyline, useMap } from "react-leaflet";
+import { computeRouteMetrics, formatDistance, formatPaceSecondsPerMi, STEPS_PER_HOUR } from "../utils/routeMetrics.js";
 
 const DEFAULT_CENTER = [39.8283, -98.5795];
-const DEFAULT_ZOOM = 4;
-const LOCATION_ZOOM = 14;
+const DEFAULT_ZOOM = 16;
+const LOCATION_ZOOM = 16;
 const OSM_TILES = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
@@ -89,6 +90,11 @@ function RecordRoutePage() {
     const [wakeNeedsTap, setWakeNeedsTap] = useState(false);
     const navigate = useNavigate();
 
+    const liveMetrics = useMemo(
+        () => computeRouteMetrics(points, elapsedSeconds),
+        [points, elapsedSeconds]
+    );
+
     const getNoSleep = useCallback(() => {
         if (!noSleepRef.current) noSleepRef.current = new NoSleep();
         return noSleepRef.current;
@@ -149,7 +155,6 @@ function RecordRoutePage() {
                 {
                     name: getAutoRouteName(new Date(start)),
                     recordedAt: new Date(start).toISOString(),
-                    location: "",
                     points: [],
                     durationSeconds: null,
                 },
@@ -287,53 +292,20 @@ function RecordRoutePage() {
     return (
         <div className="w-full max-w-2xl mx-auto px-4 py-4 pt-20 pb-32">
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl shadow-2xl p-6 sm:p-8 border border-slate-700">
-                {/* Prominent route name with edit */}
-                <div className="mb-6 p-4 rounded-lg bg-slate-700/50 border border-slate-600">
-                    {editingName ? (
-                        <div className="flex flex-wrap items-center gap-2">
-                            <input
-                                type="text"
-                                value={editingNameValue}
-                                onChange={(e) => setEditingNameValue(e.target.value)}
-                                placeholder="Route name"
-                                className="flex-1 min-w-[200px] p-2 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-500 focus:outline-none focus:border-slate-500"
-                                autoFocus
-                            />
-                            <button
-                                type="button"
-                                onClick={saveEditName}
-                                className="rounded-lg bg-emerald-700 text-white hover:bg-emerald-600 py-2 px-4 font-semibold"
-                            >
-                                Save
-                            </button>
-                            <button
-                                type="button"
-                                onClick={cancelEditName}
-                                className="rounded-lg bg-slate-600 text-white hover:bg-slate-500 py-2 px-4 font-semibold"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="flex items-center justify-between gap-2">
-                            <span className="text-lg sm:text-xl font-semibold text-white break-words">
-                                {routeName || "Unnamed route"}
-                            </span>
-                            <button
-                                type="button"
-                                onClick={startEditName}
-                                className="shrink-0 rounded p-2 text-slate-400 hover:text-emerald-400 hover:bg-slate-600"
-                                title="Edit route name"
-                                aria-label="Edit route name"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                </svg>
-                            </button>
-                        </div>
-                    )}
+                <div className="mb-6 -mt-1">
+                    <button
+                        type="button"
+                        onClick={handleExit}
+                        disabled={!isRecording || saving}
+                        className="rounded-lg bg-slate-600 text-white hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed py-2.5 px-4 font-semibold inline-flex items-center gap-2"
+                        aria-label="Back to dashboard"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Back
+                    </button>
                 </div>
-
 
                 {/* Large live timer */}
                 <div className="text-center py-2">
@@ -342,33 +314,26 @@ function RecordRoutePage() {
                     </div>
                 </div>
 
-                {/* Screen stay-awake (NoSleep.js); optional, battery-heavy; no effect if user locks screen */}
-                <div className="mb-6 p-4 rounded-lg border border-slate-600 bg-slate-800/40">
-                    <label className="flex items-start gap-3 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            className="mt-1 h-4 w-4 rounded border-slate-500 text-emerald-600 focus:ring-emerald-500"
-                            checked={keepScreenAwake}
-                            onChange={(e) => setKeepScreenAwake(e.target.checked)}
-                            disabled={!isRecording}
-                        />
-                        <span>
-                            <span className="font-medium text-white">Keep screen awake</span>
-                            <span className="block text-sm text-slate-400 mt-1">
-                                Reduces automatic screen lock while you record (uses more battery). Does not work if you lock the screen manually.
-                            </span>
-                        </span>
-                    </label>
-                    {wakeNeedsTap && keepScreenAwake && isRecording && (
-                        <button
-                            type="button"
-                            onClick={handleWakeTap}
-                            className="mt-3 w-full rounded-lg bg-amber-700/90 text-white hover:bg-amber-600 py-2 px-4 text-sm font-semibold"
-                        >
-                            Tap to enable screen wake
-                        </button>
-                    )}
-                </div>
+                <dl className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 text-center sm:text-left">
+                    <div className="rounded-lg bg-slate-700/40 border border-slate-600 px-3 py-2">
+                        <dt className="text-xs text-slate-400 font-medium">Distance</dt>
+                        <dd className="text-white font-semibold font-mono tabular-nums mt-0.5">
+                            {formatDistance(liveMetrics.distanceMeters)}
+                        </dd>
+                    </div>
+                    <div className="rounded-lg bg-slate-700/40 border border-slate-600 px-3 py-2">
+                        <dt className="text-xs text-slate-400 font-medium">Est. Steps</dt>
+                        <dd className="text-white font-semibold font-mono tabular-nums mt-0.5">
+                            {liveMetrics.estimatedSteps.toLocaleString()}
+                        </dd>
+                    </div>
+                    <div className="rounded-lg bg-slate-700/40 border border-slate-600 px-3 py-2">
+                        <dt className="text-xs text-slate-400 font-medium">Pace</dt>
+                        <dd className="text-white font-semibold font-mono tabular-nums mt-0.5">
+                            {formatPaceSecondsPerMi(liveMetrics.paceSecondsPerMi)}
+                        </dd>
+                    </div>
+                </dl>
 
                 {/* Map */}
                 <div className="w-full max-w-xl aspect-square mx-auto rounded-xl overflow-hidden border border-slate-700/80 shadow-xl mb-6">
@@ -426,6 +391,78 @@ function RecordRoutePage() {
                     >
                         Exit
                     </button>
+                </div>
+
+                {/* Prominent route name with edit */}
+                <div className="my-6 p-4 rounded-lg bg-slate-700/50 border border-slate-600">
+                    {editingName ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                            <input
+                                type="text"
+                                value={editingNameValue}
+                                onChange={(e) => setEditingNameValue(e.target.value)}
+                                placeholder="Route name"
+                                className="flex-1 min-w-[200px] p-2 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-500 focus:outline-none focus:border-slate-500"
+                                autoFocus
+                            />
+                            <button
+                                type="button"
+                                onClick={saveEditName}
+                                className="rounded-lg bg-emerald-700 text-white hover:bg-emerald-600 py-2 px-4 font-semibold"
+                            >
+                                Save
+                            </button>
+                            <button
+                                type="button"
+                                onClick={cancelEditName}
+                                className="rounded-lg bg-slate-600 text-white hover:bg-slate-500 py-2 px-4 font-semibold"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-between gap-2">
+                            <span className="text-lg sm:text-xl font-semibold text-white break-words">
+                                {routeName || "Unnamed route"}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={startEditName}
+                                className="shrink-0 rounded p-2 text-slate-400 hover:text-emerald-400 hover:bg-slate-600"
+                                title="Edit route name"
+                                aria-label="Edit route name"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* Screen stay-awake (NoSleep.js); optional, battery-heavy; no effect if user locks screen */}
+                <div className="my-6 p-4 rounded-lg border border-slate-600 bg-slate-800/40">
+                    <label className="flex items-start gap-3 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            className="mt-1 h-4 w-4 rounded border-slate-500 text-emerald-600 focus:ring-emerald-500"
+                            checked={keepScreenAwake}
+                            onChange={(e) => setKeepScreenAwake(e.target.checked)}
+                            disabled={!isRecording}
+                        />
+                        <span>
+                            <span className="font-medium text-white">Keep screen awake</span>
+                        </span>
+                    </label>
+                    {wakeNeedsTap && keepScreenAwake && isRecording && (
+                        <button
+                            type="button"
+                            onClick={handleWakeTap}
+                            className="mt-3 w-full rounded-lg bg-amber-700/90 text-white hover:bg-amber-600 py-2 px-4 text-sm font-semibold"
+                        >
+                            Tap to enable screen wake
+                        </button>
+                    )}
                 </div>
 
                 {/* Point log: terminal-style list of each recorded point; scrollable when >400px, auto-scrolls to bottom */}

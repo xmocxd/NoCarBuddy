@@ -3,7 +3,8 @@
  * All endpoints require a valid user JWT (not admin). Map routes are scoped by req.user.userId.
  *
  * - GET /map-routes – List all map routes for the current user.
- * - POST /map-routes – Create a new map route. Body: { name, recordedAt?, location?, points?, durationSeconds? }.
+ * - POST /map-routes – Create a new map route. Body: { name, recordedAt?, points?, durationSeconds? }.
+ *   Saved metrics (distanceMeters, estimatedSteps, paceSecondsPerMi) are set when recording stops (PATCH with durationSeconds).
  * - PUT /map-routes/:id – Update a map route's name (only if it belongs to the current user).
  * - DELETE /map-routes/:id – Delete a map route (only if it belongs to the current user).
  */
@@ -11,8 +12,35 @@
 import express from 'express';
 import auth from '../middleware/auth.js';
 import { query, ensureSchema } from '../db.js';
+import { computeRouteMetrics } from '../routeMetrics.js';
 
 const router = express.Router();
+
+const MAP_ROUTE_SELECT =
+  'id, user_id, name, recorded_at, location, points, duration_seconds, distance_meters, estimated_steps, pace_seconds_per_mi, pace_seconds_per_km';
+
+function mapRouteRow(row) {
+  let paceSecondsPerMi =
+    row.pace_seconds_per_mi != null ? Number(row.pace_seconds_per_mi) : null;
+  if (
+    paceSecondsPerMi == null &&
+    row.pace_seconds_per_km != null &&
+    Number.isFinite(Number(row.pace_seconds_per_km))
+  ) {
+    paceSecondsPerMi = Number(row.pace_seconds_per_km) * (1609.344 / 1000);
+  }
+  return {
+    id: row.id,
+    userId: row.user_id,
+    name: row.name,
+    recordedAt: row.recorded_at,
+    points: row.points || [],
+    durationSeconds: row.duration_seconds ?? null,
+    distanceMeters: row.distance_meters != null ? Number(row.distance_meters) : null,
+    estimatedSteps: row.estimated_steps != null ? Number(row.estimated_steps) : null,
+    paceSecondsPerMi,
+  };
+}
 
 /** Require that the request has a valid user session (not admin). */
 function requireUser(req, res, next) {
@@ -27,18 +55,10 @@ router.get('/', auth, requireUser, async function (req, res, next) {
   await ensureSchema();
   try {
     const result = await query(
-      'SELECT id, user_id, name, recorded_at, location, points, duration_seconds FROM map_routes WHERE user_id = $1 ORDER BY recorded_at DESC',
+      `SELECT ${MAP_ROUTE_SELECT} FROM map_routes WHERE user_id = $1 ORDER BY recorded_at DESC`,
       [req.user.userId]
     );
-    const mapRoutes = result.rows.map((row) => ({
-      id: row.id,
-      userId: row.user_id,
-      name: row.name,
-      recordedAt: row.recorded_at,
-      location: row.location || '',
-      points: row.points || [],
-      durationSeconds: row.duration_seconds ?? null,
-    }));
+    const mapRoutes = result.rows.map(mapRouteRow);
     res.json(mapRoutes);
   } catch (err) {
     next(err);
@@ -50,30 +70,21 @@ router.get('/:id', auth, requireUser, async function (req, res, next) {
   await ensureSchema();
   try {
     const result = await query(
-      'SELECT id, user_id, name, recorded_at, location, points, duration_seconds FROM map_routes WHERE id = $1 AND user_id = $2',
+      `SELECT ${MAP_ROUTE_SELECT} FROM map_routes WHERE id = $1 AND user_id = $2`,
       [req.params.id, req.user.userId]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Map route not found' });
     }
-    const row = result.rows[0];
-    res.json({
-      id: row.id,
-      userId: row.user_id,
-      name: row.name,
-      recordedAt: row.recorded_at,
-      location: row.location || '',
-      points: row.points || [],
-      durationSeconds: row.duration_seconds ?? null,
-    });
+    res.json(mapRouteRow(result.rows[0]));
   } catch (err) {
     next(err);
   }
 });
 
-/** POST /map-routes – Create a new map route. Body: name (required), recordedAt (ISO string, optional), location, points, durationSeconds. */
+/** POST /map-routes – Create a new map route. Body: name (required), recordedAt (ISO string, optional), points, durationSeconds. */
 router.post('/', auth, requireUser, async function (req, res, next) {
-  const { name, recordedAt, location, points, durationSeconds } = req.body || {};
+  const { name, recordedAt, points, durationSeconds } = req.body || {};
   if (name == null || typeof name !== 'string' || name.trim() === '') {
     return res.status(400).json({ error: 'Name is required' });
   }
@@ -81,26 +92,18 @@ router.post('/', auth, requireUser, async function (req, res, next) {
   await ensureSchema();
   try {
     const recordedAtVal = recordedAt ? new Date(recordedAt) : new Date();
-    const locationVal = location != null ? String(location) : '';
+    const locationVal = '';
     const pointsVal = Array.isArray(points) ? points : [];
     const durationVal = durationSeconds != null && Number.isInteger(Number(durationSeconds)) ? Number(durationSeconds) : null;
 
     const result = await query(
       `INSERT INTO map_routes (user_id, name, recorded_at, location, points, duration_seconds)
        VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id, user_id, name, recorded_at, location, points, duration_seconds`,
+       RETURNING ${MAP_ROUTE_SELECT}`,
       [req.user.userId, name.trim(), recordedAtVal, locationVal, JSON.stringify(pointsVal), durationVal]
     );
     const row = result.rows[0];
-    res.status(201).json({
-      id: row.id,
-      userId: row.user_id,
-      name: row.name,
-      recordedAt: row.recorded_at,
-      location: row.location || '',
-      points: row.points || [],
-      durationSeconds: row.duration_seconds ?? null,
-    });
+    res.status(201).json(mapRouteRow(row));
   } catch (err) {
     next(err);
   }
@@ -150,8 +153,20 @@ router.patch('/:id', auth, requireUser, async function (req, res, next) {
     const values = [];
     let i = 1;
     if (durationVal !== null) {
+      const sel = await query('SELECT points FROM map_routes WHERE id = $1 AND user_id = $2', [routeId, req.user.userId]);
+      if (sel.rows.length === 0) {
+        return res.status(404).json({ error: 'Map route not found' });
+      }
+      const pts = sel.rows[0].points || [];
+      const metrics = computeRouteMetrics(pts, durationVal);
       updates.push(`duration_seconds = $${i++}`);
       values.push(durationVal);
+      updates.push(`distance_meters = $${i++}`);
+      values.push(metrics.distanceMeters);
+      updates.push(`estimated_steps = $${i++}`);
+      values.push(metrics.estimatedSteps);
+      updates.push(`pace_seconds_per_mi = $${i++}`);
+      values.push(metrics.paceSecondsPerMi);
     }
     if (nameVal !== null) {
       updates.push(`name = $${i++}`);
@@ -162,22 +177,13 @@ router.patch('/:id', auth, requireUser, async function (req, res, next) {
     }
     values.push(routeId, req.user.userId);
     const result = await query(
-      `UPDATE map_routes SET ${updates.join(', ')} WHERE id = $${i++} AND user_id = $${i} RETURNING id, user_id, name, recorded_at, location, points, duration_seconds`,
+      `UPDATE map_routes SET ${updates.join(', ')} WHERE id = $${i++} AND user_id = $${i} RETURNING ${MAP_ROUTE_SELECT}`,
       values
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Map route not found' });
     }
-    const row = result.rows[0];
-    res.json({
-      id: row.id,
-      userId: row.user_id,
-      name: row.name,
-      recordedAt: row.recorded_at,
-      location: row.location || '',
-      points: row.points || [],
-      durationSeconds: row.duration_seconds ?? null,
-    });
+    res.json(mapRouteRow(result.rows[0]));
   } catch (err) {
     next(err);
   }
@@ -193,22 +199,13 @@ router.put('/:id', auth, requireUser, async function (req, res, next) {
   await ensureSchema();
   try {
     const result = await query(
-      'UPDATE map_routes SET name = $1 WHERE id = $2 AND user_id = $3 RETURNING id, user_id, name, recorded_at, location, points, duration_seconds',
+      `UPDATE map_routes SET name = $1 WHERE id = $2 AND user_id = $3 RETURNING ${MAP_ROUTE_SELECT}`,
       [name.trim(), req.params.id, req.user.userId]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Map route not found' });
     }
-    const row = result.rows[0];
-    res.json({
-      id: row.id,
-      userId: row.user_id,
-      name: row.name,
-      recordedAt: row.recorded_at,
-      location: row.location || '',
-      points: row.points || [],
-      durationSeconds: row.duration_seconds ?? null,
-    });
+    res.json(mapRouteRow(result.rows[0]));
   } catch (err) {
     next(err);
   }

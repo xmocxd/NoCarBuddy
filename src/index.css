@@ -24,3 +24,10 @@ body {
 }
 
 @import "tailwindcss";
+
+button:hover:not(:disabled) {
+    cursor: pointer;
+}
+button:disabled {
+    cursor: not-allowed;
+}

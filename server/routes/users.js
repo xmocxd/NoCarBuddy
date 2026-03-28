@@ -187,7 +187,7 @@ router.post('/', async function (req, res, next) {
     const durationSeconds = Math.floor(120 + Math.random() * (2100 - 120));
     await query(
       'INSERT INTO map_routes (user_id, name, recorded_at, location, points, duration_seconds) VALUES ($1, $2, now(), $3, $4, $5)',
-      [user.id, 'Sample map route', 'Sample location', testPoints, durationSeconds]
+      [user.id, 'Sample map route', '', testPoints, durationSeconds]
     );
 
     // Return the user without the token in the response (the token is only in the email).

@@ -49,7 +49,7 @@ Stores GPS-recorded map routes (tracks) per user.
 | `user_id`    | INTEGER      | Foreign key to `users(id)`. Not null. |
 | `name`       | VARCHAR(255) | Display name for the map route. Not null. |
 | `recorded_at`| TIMESTAMPTZ  | When the map route was recorded. Not null, default `now()`. |
-| `location`   | TEXT         | Optional location description. |
+| `location`   | TEXT         | Legacy column; not used by the app (always stored as empty). |
 | `points`     | JSONB        | Array of points (e.g. `[{ lat, lng }]`). Not null, default `'[]'`. |
 
 The table is created in `server/db.js` together with `users` when `ensureSchema()` runs. Map route CRUD is handled by `server/routes/mapRoutes.js` and mounted at `/map-routes`.

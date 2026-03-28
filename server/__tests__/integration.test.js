@@ -58,7 +58,6 @@ dbDescribe('API with PostgreSQL', () => {
       .send({
         name: 'Jest test route',
         recordedAt: new Date().toISOString(),
-        location: '',
         points: [],
         durationSeconds: null,
       })

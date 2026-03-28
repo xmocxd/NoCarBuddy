@@ -74,6 +74,44 @@ const ADD_DURATION_COLUMN = `
   END $$;
 `;
 
+/** distance_meters, estimated_steps (6000/h), pace_seconds_per_km — added for existing deployments. */
+const ADD_MAP_ROUTE_METRICS_COLUMNS = `
+  DO $$
+  BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'map_routes')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'map_routes' AND column_name = 'distance_meters') THEN
+      ALTER TABLE map_routes ADD COLUMN distance_meters DOUBLE PRECISION;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'map_routes')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'map_routes' AND column_name = 'estimated_steps') THEN
+      ALTER TABLE map_routes ADD COLUMN estimated_steps INTEGER;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'map_routes')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'map_routes' AND column_name = 'pace_seconds_per_km') THEN
+      ALTER TABLE map_routes ADD COLUMN pace_seconds_per_km DOUBLE PRECISION;
+    END IF;
+  END $$;
+`;
+
+/** pace_seconds_per_mi — preferred; migrate from pace_seconds_per_km where present. */
+const ADD_PACE_SECONDS_PER_MI = `
+  DO $$
+  BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'map_routes')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'map_routes' AND column_name = 'pace_seconds_per_mi') THEN
+      ALTER TABLE map_routes ADD COLUMN pace_seconds_per_mi DOUBLE PRECISION;
+    END IF;
+  END $$;
+`;
+
+/** Convert legacy km-based pace to seconds per mile (same duration / distance in miles). */
+const MIGRATE_PACE_KM_TO_MI = `
+  UPDATE map_routes
+  SET pace_seconds_per_mi = pace_seconds_per_km * (1609.344 / 1000.0)
+  WHERE pace_seconds_per_mi IS NULL
+    AND pace_seconds_per_km IS NOT NULL;
+`;
+
 export async function ensureSchema() {
   if (schemaInitialized) return;
   const client = await pool.connect();
@@ -81,6 +119,9 @@ export async function ensureSchema() {
     await client.query(CREATE_USERS_TABLE);
     await client.query(CREATE_MAP_ROUTES_TABLE);
     await client.query(ADD_DURATION_COLUMN);
+    await client.query(ADD_MAP_ROUTE_METRICS_COLUMNS);
+    await client.query(ADD_PACE_SECONDS_PER_MI);
+    await client.query(MIGRATE_PACE_KM_TO_MI);
     schemaInitialized = true;
   } finally {
     client.release();
