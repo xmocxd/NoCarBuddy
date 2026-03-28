@@ -379,7 +379,7 @@ function RecordRoutePage() {
     return (
         <div className="w-full max-w-none lg:mx-4 px-0 sm:max-w-2xl sm:mx-0 pt-20 pb-32">
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-none sm:rounded-xl shadow-2xl lg:px-4 py-6 sm:px-0 sm:mx-0 border-y sm:border border-slate-700">
-                <div className="mb-6 -mt-1 flex flex-row justify-between items-center gap-3">
+                <div className="mb-6 -mt-1 flex flex-row items-center gap-3">
                     <button
                         type="button"
                         onClick={handleExit}
@@ -391,22 +391,6 @@ function RecordRoutePage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
                         Back
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setTestMoveGpsEnabled((on) => !on)}
-                        className={`shrink-0 rounded-lg py-2 px-3 text-xs sm:text-sm font-semibold border-2 text-right leading-tight ${
-                            testMoveGpsEnabled
-                                ? "bg-amber-600 border-amber-500 text-white hover:bg-amber-500"
-                                : "bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600"
-                        }`}
-                        title={
-                            testMoveGpsEnabled
-                                ? "Test move GPS on — coords are offset"
-                                : "Toggle fake GPS drift for testing (no real movement needed)"
-                        }
-                    >
-                        Test move GPS{testMoveGpsEnabled ? " ON" : ""}
                     </button>
                 </div>
 
@@ -480,15 +464,36 @@ function RecordRoutePage() {
                 </dl>
 
 
-                <div className="flex justify-center">
-                    <button
-                        type="button"
-                        onClick={handleExit}
-                        disabled={!isRecording || saving}
-                        className="rounded-lg bg-slate-600 text-white hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed py-3 px-6 font-semibold"
-                    >
-                        Exit
-                    </button>
+                <div className="flex flex-col items-center gap-2">
+                    <div className="flex justify-center items-center gap-3 flex-wrap">
+                        <button
+                            type="button"
+                            onClick={handleExit}
+                            disabled={!isRecording || saving}
+                            className="rounded-lg bg-slate-600 text-white hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed py-3 px-6 font-semibold"
+                        >
+                            Exit
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setTestMoveGpsEnabled((on) => !on)}
+                            className={`shrink-0 rounded-lg py-3 px-4 text-sm font-semibold border-2 leading-tight ${
+                                testMoveGpsEnabled
+                                    ? "bg-amber-600 border-amber-500 text-white hover:bg-amber-500"
+                                    : "bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600"
+                            }`}
+                            title={
+                                testMoveGpsEnabled
+                                    ? "Test move GPS on — coords are offset"
+                                    : "Toggle fake GPS drift for testing (no real movement needed)"
+                            }
+                        >
+                            Test move GPS{testMoveGpsEnabled ? " ON" : ""}
+                        </button>
+                    </div>
+                    <p className="text-xs text-slate-400 text-center max-w-md px-2">
+                        Click test button to move GPS around artificially for testing. (Not used in normal operation)
+                    </p>
                 </div>
 
                 <div className="my-6 p-4 rounded-lg bg-slate-700/50 border border-slate-600">
