@@ -62,6 +62,35 @@ dbDescribe('User-facing API (PostgreSQL)', () => {
     return agent.post('/api/users/login').send({ email: emailB, password }).then(() => agent);
   }
 
+  describe('POST /api/users (sign up)', () => {
+    let signUpUserId;
+    const signUpEmail = `jest-signup-${Date.now()}@example.com`;
+
+    afterAll(async () => {
+      if (signUpUserId != null) {
+        await query('DELETE FROM map_routes WHERE user_id = $1', [signUpUserId]);
+        await query('DELETE FROM users WHERE id = $1', [signUpUserId]);
+      }
+    });
+
+    it('creates user without inserting a sample map route', async () => {
+      const res = await request(app)
+        .post('/api/users')
+        .send({
+          email: signUpEmail,
+          firstName: 'SignUp',
+          lastName: 'Test',
+          state: 'pending',
+        })
+        .expect(200);
+      signUpUserId = res.body.id;
+      expect(signUpUserId).toBeDefined();
+
+      const count = await query('SELECT COUNT(*)::int AS c FROM map_routes WHERE user_id = $1', [signUpUserId]);
+      expect(count.rows[0].c).toBe(0);
+    });
+  });
+
   describe('POST /api/users/login', () => {
     it('returns 401 for wrong password', async () => {
       await request(app)

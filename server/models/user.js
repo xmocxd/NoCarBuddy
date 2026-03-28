@@ -37,17 +37,6 @@ export async function updateUserBody(userId, bodyObj) {
   await query('UPDATE users SET body = $1 WHERE id = $2', [JSON.stringify(bodyObj), userId]);
 }
 
-export async function insertSampleMapRoute(userId) {
-  const lat = 37 + Math.random() * 2;
-  const lng = -122 + Math.random() * 2;
-  const testPoints = JSON.stringify([{ lat, lng }]);
-  const durationSeconds = Math.floor(120 + Math.random() * (2100 - 120));
-  await query(
-    'INSERT INTO map_routes (user_id, name, recorded_at, location, points, duration_seconds) VALUES ($1, $2, now(), $3, $4, $5)',
-    [userId, 'Sample map route', '', testPoints, durationSeconds]
-  );
-}
-
 export async function deleteMapRoutesForUser(userId) {
   await query('DELETE FROM map_routes WHERE user_id = $1', [userId]);
 }

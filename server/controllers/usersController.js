@@ -8,7 +8,6 @@ import {
   listUsersOrdered,
   insertUser,
   updateUserBody,
-  insertSampleMapRoute,
   deleteMapRoutesForUser,
   deleteUserById,
   updateUserStateAndBody,
@@ -109,8 +108,6 @@ export async function create(req, res, next) {
     if (!emailResult.sent && emailResult.error) {
       console.warn('[users] Sign up succeeded but set-password email failed:', emailResult.error);
     }
-
-    await insertSampleMapRoute(user.id);
 
     res.json(user);
   } catch (err) {
