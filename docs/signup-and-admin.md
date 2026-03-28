@@ -17,7 +17,7 @@ This document describes the **user sign-up process** (and related flows) and the
 | Step | What happens |
 |------|----------------|
 | 1. Sign up | User visits **Sign Up** (`/signup/`), enters email, first name, last name, and agrees to terms. Frontend sends `POST /api/users` with `{ email, firstName, lastName, state: 'pending' }`. |
-| 2. Create user + email | Server inserts a row in the `users` table, generates a secure random token and 30-minute expiry, stores them in the user’s `body` (JSONB), and sends an email with a link: `{APP_BASE_URL}/set-password/?token=...`. If SMTP is not configured, the link is logged to the server console. |
+| 2. Create user + email | Server inserts a row in the `users` table, generates a secure random token and 30-minute expiry, stores them in the user’s `body` (JSONB), and sends an email with a link: `{APP_BASE_URL}/set-password/?token=...`. If Resend is not configured (`RESEND_API_KEY` and a `from` address), the link is logged to the server console. |
 | 3. Set password | User opens the link and lands on **Set password** (`/set-password/?token=...`). The page calls `GET /api/set-password/validate/:token` to check the token; if valid, the user submits a new password via `POST /api/set-password` with `{ token, password }`. Server hashes the password, saves it in the user’s `body`, and removes the one-time token. |
 | 4. Log in | User goes to **Log In** (`/login/`), enters email and the password they just set. `POST /api/users/login` verifies credentials, then sets an httpOnly JWT cookie. |
 | 5. Dashboard | User is redirected to **Dashboard** (`/dashboard/`). The page calls `GET /api/users/me` (cookie sent automatically); the server returns the user’s profile and the UI shows a personalized welcome. |
@@ -33,7 +33,7 @@ This document describes the **user sign-up process** (and related flows) and the
   - `POST /set-password` – body `{ token, password }`; validates token, hashes password with bcrypt, updates the user’s `body` with `passwordHash` and removes the one-time token fields.
 
 - **Email**  
-  `server/email.js`: uses nodemailer and SMTP env vars (`SMTP_HOST`, `SMTP_PORT`, etc.). See [config-env.md](config-env.md) for optional email configuration. Without SMTP, the app still runs and logs the set-password link.
+  `server/email.js`: sends via the [Resend](https://resend.com/) API using `RESEND_API_KEY` and `RESEND_FROM` (or `SMTP_FROM`). See [config-env.md](config-env.md) for optional email configuration. Without those, the app still runs and logs the set-password link.
 
 - **User login and profile**  
   `server/routes/users.js`: `POST /users/login` (email + password, bcrypt compare, JWT cookie), `GET /users/me` (auth middleware, returns safe profile), `POST /users/logout` (clears cookie).

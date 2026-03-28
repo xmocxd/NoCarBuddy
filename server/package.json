@@ -18,8 +18,8 @@
     "express-winston": "^4.2.0",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
-    "nodemailer": "^8.0.2",
     "pg": "^8.13.0",
+    "resend": "^6.9.4",
     "vite-express": "^0.21.1",
     "winston": "^3.18.3"
   },

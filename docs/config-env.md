@@ -44,20 +44,18 @@ ADMIN_PASSWORD="admin"
 ```
 
 **Optional – Set-password email (after sign up):**  
-If you want the app to send a “set your password” email when users sign up, set SMTP and base URL:
+If you want the app to send a “set your password” email when users sign up, set [Resend](https://resend.com/) and base URL:
 
 ```
-SMTP_HOST="smtp.example.com"
-SMTP_PORT="587"
-SMTP_SECURE="false"
-SMTP_USER="your-smtp-user"
-SMTP_PASS="your-smtp-password"
-SMTP_FROM="noreply@yourdomain.com"
+RESEND_API_KEY="re_xxxxxxxx"
+RESEND_FROM="NoCarBuddy <noreply@yourdomain.com>"
 APP_BASE_URL="http://localhost:5173"
 ```
 
+- `RESEND_API_KEY` — create one in the Resend dashboard ([API Keys](https://resend.com/api-keys)).
+- `RESEND_FROM` — must be a verified domain/sender in Resend. For quick tests you can use `onboarding@resend.dev` (testing only). `SMTP_FROM` is also read if set (same value as `RESEND_FROM`).
 - `APP_BASE_URL` is the public URL of the frontend (used for the link in the email). Defaults to `http://localhost:5173` if not set.
-- If `SMTP_HOST` and `SMTP_PORT` are not set, the server still runs; it will log the set-password link to the console instead of sending email (handy for local testing).
+- If `RESEND_API_KEY` or the sender (`RESEND_FROM` / `SMTP_FROM`) is missing, the server still runs; it will log the set-password link to the console instead of sending email (handy for local testing).
 
 The server creates the `users` table automatically on startup if it does not exist.
 
