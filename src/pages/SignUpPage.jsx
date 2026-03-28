@@ -46,7 +46,7 @@ function SignUpPage() {
         axios.post('/api/users', {
             firstName: user.firstName.value,
             lastName: user.lastName.value,
-            email: user.email.value,
+            email: user.email.value.trim().toLowerCase(),
             state: 'pending'
         }).then(() => {
             navigate('/confirmation', { state: { message: 'Thank you for signing up! Please check your email for confirmation and next steps.' } });

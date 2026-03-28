@@ -115,6 +115,13 @@ dbDescribe('User-facing API (PostgreSQL)', () => {
       expect(res.body.message).toMatch(/success/i);
       expect(res.headers['set-cookie']).toBeDefined();
     });
+
+    it('accepts login when submitted email casing differs from stored email', async () => {
+      await request(app)
+        .post('/api/users/login')
+        .send({ email: emailA.toUpperCase(), password })
+        .expect(200);
+    });
   });
 
   describe('GET /api/users/me', () => {

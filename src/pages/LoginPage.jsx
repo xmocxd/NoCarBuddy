@@ -17,7 +17,11 @@ function LoginPage() {
         setSubmitting(true);
 
         axios
-            .post("/api/users/login", { email, password }, { withCredentials: true })
+            .post(
+                "/api/users/login",
+                { email: email.trim().toLowerCase(), password },
+                { withCredentials: true }
+            )
             .then(() => refreshUser())
             .then(() => {
                 navigate("/dashboard/", { replace: true });

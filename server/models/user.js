@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { query, ensureSchema } from '../db.js';
+import { normalizeEmail } from '../utils/normalizeEmail.js';
 
 export function rowToUser(row) {
   const { id, state, body = {} } = row;
@@ -8,9 +9,11 @@ export function rowToUser(row) {
 }
 
 export async function findUserForLogin(email) {
+  const normalized = normalizeEmail(email);
+  if (!normalized) return null;
   const result = await query(
     "SELECT id, state, body FROM users WHERE body->>'email' = $1 AND body->>'passwordHash' IS NOT NULL AND state = $2",
-    [email, 'active']
+    [normalized, 'active']
   );
   return result.rows[0] ? rowToUser(result.rows[0]) : null;
 }

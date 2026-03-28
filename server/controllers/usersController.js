@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { ensureSchema } from '../db.js';
 import { sendSetPasswordEmail } from '../email.js';
+import { normalizeEmail } from '../utils/normalizeEmail.js';
 import {
   findUserForLogin,
   findUserById,
@@ -15,7 +16,8 @@ import {
 } from '../models/user.js';
 
 export async function login(req, res, next) {
-  const { email, password } = req.body || {};
+  const { password } = req.body || {};
+  const email = normalizeEmail(req.body?.email);
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required' });
   }
@@ -95,6 +97,9 @@ export async function create(req, res, next) {
   const state = req.body.state || 'pending';
   const { id: _id, state: _s, ...rest } = req.body;
   const body = Object.keys(rest).length ? rest : {};
+  if (typeof body.email === 'string') {
+    body.email = normalizeEmail(body.email);
+  }
 
   try {
     const user = await insertUser(state, body);
@@ -151,6 +156,9 @@ export async function update(req, res, next) {
   const state = user.state ?? 'pending';
   const { id: _id, state: _s, ...rest } = user;
   const body = Object.keys(rest).length ? rest : {};
+  if (typeof body.email === 'string') {
+    body.email = normalizeEmail(body.email);
+  }
 
   try {
     const updated = await updateUserStateAndBody(req.params.id, state, body);
