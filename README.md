@@ -2,7 +2,7 @@
 
 NoCarBuddy is a proof-of-concept app to track GPS routes for walking and running.  It takes a GPS position update every 5 seconds and plots a route, which can be saved to your user account and reviewed later, calculating distance and average steps.
 
-!(Main App View)[https://github.com/xmocxd/NoCarBuddy/blob/main/docs/ss/main.png]
+![Main App View](docs/ss/main.png)
 
 TODO:
 - get the distance and average step calculation
