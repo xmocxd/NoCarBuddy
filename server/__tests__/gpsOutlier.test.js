@@ -73,7 +73,7 @@ describe('gpsOutlier', () => {
     expect(passesTriggerBand(pNear, state)).toBe(true);
   });
 
-  it('recheck band (9×) is wider than trigger band (7×)', () => {
+  it('recheck band (15×) is wider than trigger band (7×)', () => {
     let state = emptyState();
     for (let i = 0; i < MIN_ACCEPTED_POINTS_BEFORE_OUTLIER_CHECK; i++) {
       state = acceptGpsPoint({ lat: 40 + i * 0.0001, lng: -74 }, state);
@@ -90,7 +90,7 @@ describe('gpsOutlier', () => {
     expect(passesRecheckBand(pBetween, state)).toBe(true);
   });
 
-  it('acceptGpsPoint accumulates running mean inputs like the record page', () => {
+  it('acceptGpsPoint accumulates segment distance and point count', () => {
     const p1 = { lat: 40, lng: -74 };
     const p2 = { lat: 40.0001, lng: -74 };
     const p3 = { lat: 40.0002, lng: -74 };

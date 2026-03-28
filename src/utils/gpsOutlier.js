@@ -4,17 +4,14 @@ import { haversineMeters } from "./routeMetrics.js";
 export const DEFAULT_GPS_OUTLIER_TRIGGER_MULTIPLIER = 7;
 
 /** Lenient band: while in recovery, accept if distance ≤ this × mean segment length. */
-export const DEFAULT_GPS_OUTLIER_RECHECK_MULTIPLIER = 9;
-
-/** @deprecated Use {@link DEFAULT_GPS_OUTLIER_TRIGGER_MULTIPLIER} */
-export const DEFAULT_GPS_OUTLIER_MULTIPLIER = DEFAULT_GPS_OUTLIER_TRIGGER_MULTIPLIER;
+export const DEFAULT_GPS_OUTLIER_RECHECK_MULTIPLIER = 15;
 
 /** Outlier / jump rejection applies only after this many accepted GPS points (earlier points always kept). */
 export const MIN_ACCEPTED_POINTS_BEFORE_OUTLIER_CHECK = 14;
 
 /**
  * Max recheck failures (drops outside recheck band while in recovery) before the next point is
- * accepted with no distance check. Same semantics as before: force path triggers when failures exceed this.
+ * accepted with no distance check. Force-accept triggers when failures exceed this value.
  */
 export const GPS_OUTLIER_REJECTION_THRESHOLD = 10;
 
@@ -74,7 +71,8 @@ export function passesRecheckBand(candidate, state) {
 }
 
 /**
- * Legacy name: same as trigger band with explicit multiplier (for tests).
+ * Whether the candidate is within `multiplier ×` mean segment length (same geometry as trigger/recheck).
+ * Default multiplier is the trigger constant; tests may pass other values.
  * @param {{ lat: number, lng: number }} candidate
  * @param {{ lastAccepted: { lat: number, lng: number } | null, segmentDistSumMeters: number, segmentCount: number }} state
  * @param {number} [multiplier]
@@ -92,7 +90,7 @@ export function shouldForceAcceptNextSample(recoveryFailureCount) {
 }
 
 /**
- * Updates running segment sum/count after accepting a point (same rules as RecordRoutePage).
+ * Updates running segment sum/count after accepting a point.
  * @param {{ lat: number, lng: number }} candidate
  * @param {{ lastAccepted: { lat: number, lng: number } | null, segmentDistSumMeters: number, segmentCount: number }} state
  */

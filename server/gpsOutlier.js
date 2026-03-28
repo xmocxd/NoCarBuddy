@@ -4,10 +4,7 @@ import { haversineMeters } from './routeMetrics.js';
 export const DEFAULT_GPS_OUTLIER_TRIGGER_MULTIPLIER = 7;
 
 /** Lenient band: while in recovery, accept if distance ≤ this × mean segment length. */
-export const DEFAULT_GPS_OUTLIER_RECHECK_MULTIPLIER = 9;
-
-/** @deprecated Use DEFAULT_GPS_OUTLIER_TRIGGER_MULTIPLIER */
-export const DEFAULT_GPS_OUTLIER_MULTIPLIER = DEFAULT_GPS_OUTLIER_TRIGGER_MULTIPLIER;
+export const DEFAULT_GPS_OUTLIER_RECHECK_MULTIPLIER = 15;
 
 /** Outlier / jump rejection applies only after this many accepted GPS points (earlier points always kept). */
 export const MIN_ACCEPTED_POINTS_BEFORE_OUTLIER_CHECK = 14;
@@ -67,6 +64,7 @@ export function passesRecheckBand(candidate, state) {
   return isWithinMeanMultiplierBand(candidate, state, DEFAULT_GPS_OUTLIER_RECHECK_MULTIPLIER);
 }
 
+/** Same as {@link passesTriggerBand} with an optional custom multiplier (default: trigger). */
 export function shouldAcceptGpsCandidate(candidate, state, multiplier = DEFAULT_GPS_OUTLIER_TRIGGER_MULTIPLIER) {
   return isWithinMeanMultiplierBand(candidate, state, multiplier);
 }

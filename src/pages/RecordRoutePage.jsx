@@ -92,7 +92,7 @@ function RecordRoutePage() {
         segmentDistSumMeters: 0,
         segmentCount: 0,
     });
-    /** After a strict (7×) drop, use 9× recheck until accept or too many failures. */
+    /** After a strict (7×) drop, use 15× recheck until accept or too many failures. */
     const gpsRecoveryModeRef = useRef(false);
     /** Count of drops outside recheck band while in recovery. */
     const gpsRecoveryFailuresRef = useRef(0);
@@ -340,6 +340,7 @@ function RecordRoutePage() {
     }
 
     function handleExit() {
+        if (!window.confirm("Stop Recording?")) return;
         stopTimer();
         saveRoute("exit");
     }
@@ -369,7 +370,7 @@ function RecordRoutePage() {
 
     if (!allowed) {
         return (
-            <div className="w-full max-w-non px-4 sm:mx-0 px-0 sm:mx-0 sm:max-w-2xl sm:px-4 py-4 pt-20 text-center text-slate-300">
+            <div className="w-full max-w-none px-4 sm:mx-0 px-0 sm:mx-0 sm:max-w-2xl sm:px-4 py-4 pt-20 text-center text-slate-300">
                 Loading...
             </div>
         );
