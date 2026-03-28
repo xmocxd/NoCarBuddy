@@ -10,7 +10,7 @@ PLEASE NOTE that new user verification emails come from an email API service (Re
 
 If the render instance is not working for whatever reason, see below under [Local Setup](#local-setup)
 
-*(NOTE: TESTED ON IPHONE / iOS Version )*
+*(NOTE: TESTED ON IPHONE / iOS Version 26.3)*
 
 ## App Overview
 
@@ -83,7 +83,7 @@ If testing locally, or email verification link is not being delivered, the serve
 
 **On a mobile device go to the following URL: https://no-car-buddy.onrender.com/** 
 
-*(NOTE: TESTED ON IPHONE / iOS Version )*
+*(NOTE: TESTED ON IPHONE / iOS Version 26.3)*
 
 ## Local Setup
 
