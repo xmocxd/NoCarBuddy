@@ -85,7 +85,7 @@ If testing locally, or email verification link is not being delivered, the serve
 
 To run the app locally and run tests, follow the below instructions:
 
-1. Install dependencies (root and server), then start the app:
+**1. Install dependencies (root and server), then start the app:**
 
 ```bash
 npm i
@@ -97,9 +97,9 @@ This runs the React dev server and the Express API together via `concurrently`.
 
 *(NOTE: TESTED ON WINDOWS 11 USING WSL)*
 
-**WSL / Vite build (Rollup):** If `vite build` fails with `Cannot find module @rollup/rollup-linux-x64-gnu`, Rollup’s optional native package for **Linux** was never installed. That usually means **`npm` came from Windows** (e.g. `which npm` shows `/mnt/c/Program Files/nodejs/npm`) while **Node** runs as Linux in WSL—npm installs Windows binaries, but Rollup then looks for the Linux binary at runtime.
+***WSL / Vite build (Rollup):** If `vite build` fails with `Cannot find module @rollup/rollup-linux-x64-gnu`, Rollup’s optional native package for **Linux** was never installed. That usually means **`npm` came from Windows** (e.g. `which npm` shows `/mnt/c/Program Files/nodejs/npm`) while **Node** runs as Linux in WSL—npm installs Windows binaries, but Rollup then looks for the Linux binary at runtime.*
 
-Use **Node and npm installed inside WSL** (e.g. Ubuntu `apt install nodejs npm`, or [nvm](https://github.com/nvm-sh/nvm)), then confirm `which npm` is under `/usr/...` or your home directory, **not** under `/mnt/c/Program Files/`. From the repo root:
+*Use **Node and npm installed inside WSL** (e.g. Ubuntu `apt install nodejs npm`, or [nvm](https://github.com/nvm-sh/nvm)), then confirm `which npm` is under `/usr/...` or your home directory, **not** under `/mnt/c/Program Files/`. From the repo root:*
 
 ```bash
 rm -rf node_modules
@@ -109,7 +109,7 @@ npm run build
 
 Repeat for the server if you run tests or the API from WSL: `cd server && rm -rf node_modules && npm install`.
 
-1. Run tests (jest / supertest)
+**2. Run tests (jest / supertest)**
 
 After installing, run:
 
