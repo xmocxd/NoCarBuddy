@@ -1,6 +1,7 @@
 /**
  * HTTP smoke tests: no PostgreSQL required (routes return before DB or without hitting DB).
  */
+import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { describe, it, expect, beforeAll } from '@jest/globals';
 import { createApp } from '../app.js';
@@ -38,5 +39,31 @@ describe('POST /api/map-routes', () => {
       .post('/api/map-routes')
       .send({ name: 'Route' })
       .expect(401);
+  });
+});
+
+describe('GET /api/map-routes (unauthenticated)', () => {
+  it('returns 401 without a session cookie', async () => {
+    await request(app).get('/api/map-routes').expect(401);
+  });
+
+  it('returns 401 for GET /api/map-routes/:id', async () => {
+    await request(app).get('/api/map-routes/1').expect(401);
+  });
+});
+
+describe('JWT edge cases (no DB)', () => {
+  it('returns 403 when cookie is not a valid JWT', async () => {
+    await request(app).get('/api/users/me').set('Cookie', 'jwt=not-a-valid-jwt').expect(403);
+  });
+
+  it('returns 403 for admin JWT on GET /api/users/me (not a user session)', async () => {
+    const adminToken = jwt.sign({ userName: 'admin' }, process.env.JWT_SECRET);
+    await request(app).get('/api/users/me').set('Cookie', `jwt=${adminToken}`).expect(403);
+  });
+
+  it('returns 403 for admin JWT on GET /api/map-routes', async () => {
+    const adminToken = jwt.sign({ userName: 'admin' }, process.env.JWT_SECRET);
+    await request(app).get('/api/map-routes').set('Cookie', `jwt=${adminToken}`).expect(403);
   });
 });
