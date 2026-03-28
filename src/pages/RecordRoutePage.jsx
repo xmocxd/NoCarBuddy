@@ -269,18 +269,34 @@ function RecordRoutePage() {
     return (
         <div className="w-full max-w-2xl mx-auto px-4 py-4 pt-20 pb-32">
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl shadow-2xl p-6 sm:p-8 border border-slate-700">
-                <div className="mb-6 -mt-1">
+                <div className="mb-6 -mt-1 flex flex-row justify-between items-center gap-3">
                     <button
                         type="button"
                         onClick={handleExit}
                         disabled={!isRecording || saving}
-                        className="rounded-lg bg-slate-600 text-white hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed py-2.5 px-4 font-semibold inline-flex items-center gap-2"
+                        className="rounded-lg bg-slate-600 text-white hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed py-2.5 px-4 font-semibold inline-flex items-center gap-2 shrink-0"
                         aria-label="Back to dashboard"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
                         Back
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setTestMoveGpsEnabled((on) => !on)}
+                        className={`shrink-0 rounded-lg py-2 px-3 text-xs sm:text-sm font-semibold border-2 text-right leading-tight ${
+                            testMoveGpsEnabled
+                                ? "bg-amber-600 border-amber-500 text-white hover:bg-amber-500"
+                                : "bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600"
+                        }`}
+                        title={
+                            testMoveGpsEnabled
+                                ? "Test move GPS on — coords are offset"
+                                : "Toggle fake GPS drift for testing (no real movement needed)"
+                        }
+                    >
+                        Test move GPS{testMoveGpsEnabled ? " ON" : ""}
                     </button>
                 </div>
 
@@ -289,27 +305,6 @@ function RecordRoutePage() {
                         {formatDuration(elapsedSeconds)}
                     </div>
                 </div>
-
-                <dl className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 text-center sm:text-left">
-                    <div className="rounded-lg bg-slate-700/40 border border-slate-600 px-3 py-2">
-                        <dt className="text-xs text-slate-400 font-medium">Distance</dt>
-                        <dd className="text-white font-semibold font-mono tabular-nums mt-0.5">
-                            {formatDistance(liveMetrics.distanceMeters)}
-                        </dd>
-                    </div>
-                    <div className="rounded-lg bg-slate-700/40 border border-slate-600 px-3 py-2">
-                        <dt className="text-xs text-slate-400 font-medium">Est. Steps</dt>
-                        <dd className="text-white font-semibold font-mono tabular-nums mt-0.5">
-                            {liveMetrics.estimatedSteps.toLocaleString()}
-                        </dd>
-                    </div>
-                    <div className="rounded-lg bg-slate-700/40 border border-slate-600 px-3 py-2">
-                        <dt className="text-xs text-slate-400 font-medium">Pace</dt>
-                        <dd className="text-white font-semibold font-mono tabular-nums mt-0.5">
-                            {formatPaceSecondsPerMi(liveMetrics.paceSecondsPerMi)}
-                        </dd>
-                    </div>
-                </dl>
 
                 <div className="w-full max-w-xl aspect-square mx-auto rounded-xl overflow-hidden border border-slate-700/80 shadow-xl mb-6">
                     <MapContainer
@@ -343,24 +338,30 @@ function RecordRoutePage() {
                     </MapContainer>
                 </div>
 
+                
+                <dl className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 text-center sm:text-left">
+                    <div className="rounded-lg bg-slate-700/40 border border-slate-600 px-3 py-2">
+                        <dt className="text-xs text-slate-400 font-medium">Distance</dt>
+                        <dd className="text-white font-semibold font-mono tabular-nums mt-0.5">
+                            {formatDistance(liveMetrics.distanceMeters)}
+                        </dd>
+                    </div>
+                    <div className="rounded-lg bg-slate-700/40 border border-slate-600 px-3 py-2">
+                        <dt className="text-xs text-slate-400 font-medium">Est. Steps</dt>
+                        <dd className="text-white font-semibold font-mono tabular-nums mt-0.5">
+                            {liveMetrics.estimatedSteps.toLocaleString()}
+                        </dd>
+                    </div>
+                    <div className="rounded-lg bg-slate-700/40 border border-slate-600 px-3 py-2">
+                        <dt className="text-xs text-slate-400 font-medium">Pace</dt>
+                        <dd className="text-white font-semibold font-mono tabular-nums mt-0.5">
+                            {formatPaceSecondsPerMi(liveMetrics.paceSecondsPerMi)}
+                        </dd>
+                    </div>
+                </dl>
 
-                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center flex-wrap">
-                    <button
-                        type="button"
-                        onClick={() => setTestMoveGpsEnabled((on) => !on)}
-                        className={`rounded-lg py-3 px-6 font-semibold border-2 ${
-                            testMoveGpsEnabled
-                                ? "bg-amber-600 border-amber-500 text-white hover:bg-amber-500"
-                                : "bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600"
-                        }`}
-                        title={
-                            testMoveGpsEnabled
-                                ? "Test move GPS on — coords are offset"
-                                : "Toggle fake GPS drift for testing (no real movement needed)"
-                        }
-                    >
-                        Test move GPS {testMoveGpsEnabled ? "ON" : ""}
-                    </button>
+
+                <div className="flex justify-center">
                     <button
                         type="button"
                         onClick={handleExit}
