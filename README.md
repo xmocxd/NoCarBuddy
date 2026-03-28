@@ -10,7 +10,8 @@ TODO:
 
 **This app can be reviewed either locally on a PC (via the TEST MOVE GPS button on the app), or by opening the deployed app on a mobile device (see QUICK START section below)**
 
-!(Test GPS)[docs/ss/testgps.png]
+![Test GPS](docs/ss/testgps.png)
+
 Click the TEST MOVE GPS BUTTON to test the app from a stationary PC.  This will artificially add increasing amounts of shift to the fetched gps position to test the mapping feature.
 
 **NOTE -- CHECK THE CONSOLE FOR VERIFICATION LINK IF TESTING LOCALLY:**
