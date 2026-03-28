@@ -1,7 +1,8 @@
-import { useEffect, useState, useRef } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import L from "leaflet";
+import NoSleep from "nosleep.js";
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker, Polyline, useMap } from "react-leaflet";
 
 const DEFAULT_CENTER = [39.8283, -98.5795];
@@ -83,7 +84,38 @@ function RecordRoutePage() {
     const gpsIntervalRef = useRef(null);
     const hasAutoStartedRef = useRef(false);
     const pointsLogRef = useRef(null);
+    const noSleepRef = useRef(null);
+    const [keepScreenAwake, setKeepScreenAwake] = useState(true);
+    const [wakeNeedsTap, setWakeNeedsTap] = useState(false);
     const navigate = useNavigate();
+
+    const getNoSleep = useCallback(() => {
+        if (!noSleepRef.current) noSleepRef.current = new NoSleep();
+        return noSleepRef.current;
+    }, []);
+
+    /** NoSleep.js: Wake Lock API or hidden looping video; reduces auto-lock while the page stays visible. */
+    useEffect(() => {
+        if (!allowed || !isRecording || !keepScreenAwake) {
+            if (noSleepRef.current?.isEnabled) noSleepRef.current.disable();
+            setWakeNeedsTap(false);
+            return;
+        }
+        const ns = getNoSleep();
+        ns.enable()
+            .then(() => setWakeNeedsTap(false))
+            .catch(() => setWakeNeedsTap(true));
+        return () => {
+            ns.disable();
+        };
+    }, [allowed, isRecording, keepScreenAwake, getNoSleep]);
+
+    function handleWakeTap() {
+        const ns = getNoSleep();
+        ns.enable()
+            .then(() => setWakeNeedsTap(false))
+            .catch(() => {});
+    }
 
     // Auth check on mount
     useEffect(() => {
@@ -308,6 +340,34 @@ function RecordRoutePage() {
                     <div className="text-4xl sm:text-2xl md:text-4xl font-mono font-bold text-white tabular-nums">
                         {formatDuration(elapsedSeconds)}
                     </div>
+                </div>
+
+                {/* Screen stay-awake (NoSleep.js); optional, battery-heavy; no effect if user locks screen */}
+                <div className="mb-6 p-4 rounded-lg border border-slate-600 bg-slate-800/40">
+                    <label className="flex items-start gap-3 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            className="mt-1 h-4 w-4 rounded border-slate-500 text-emerald-600 focus:ring-emerald-500"
+                            checked={keepScreenAwake}
+                            onChange={(e) => setKeepScreenAwake(e.target.checked)}
+                            disabled={!isRecording}
+                        />
+                        <span>
+                            <span className="font-medium text-white">Keep screen awake</span>
+                            <span className="block text-sm text-slate-400 mt-1">
+                                Reduces automatic screen lock while you record (uses more battery). Does not work if you lock the screen manually.
+                            </span>
+                        </span>
+                    </label>
+                    {wakeNeedsTap && keepScreenAwake && isRecording && (
+                        <button
+                            type="button"
+                            onClick={handleWakeTap}
+                            className="mt-3 w-full rounded-lg bg-amber-700/90 text-white hover:bg-amber-600 py-2 px-4 text-sm font-semibold"
+                        >
+                            Tap to enable screen wake
+                        </button>
+                    )}
                 </div>
 
                 {/* Map */}
