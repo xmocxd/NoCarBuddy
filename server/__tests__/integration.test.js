@@ -1,15 +1,16 @@
-// Needs DATABASE_URL or TEST_DATABASE_URL (otherwise skipped).
+// Runs when DATABASE_URL, TEST_DATABASE_URL, or PG* (see hasDb) is set — requires a reachable DB.
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 import { createApp } from '../app.js';
-import { ensureSchema, query } from '../db.js';
+import { ensureSchema, query, pool } from '../db.js';
 import { computeRouteMetrics } from '../routeMetrics.js';
 
 const hasDb = Boolean(
   (process.env.DATABASE_URL && process.env.DATABASE_URL.trim()) ||
-    (process.env.TEST_DATABASE_URL && process.env.TEST_DATABASE_URL.trim())
+    (process.env.TEST_DATABASE_URL && process.env.TEST_DATABASE_URL.trim()) ||
+    (process.env.PGUSER && process.env.PGDATABASE)
 );
 
 const dbDescribe = hasDb ? describe : describe.skip;
@@ -319,5 +320,9 @@ dbDescribe('User-facing API (PostgreSQL)', () => {
         .send({ token: rawToken, password: 'another' })
         .expect(400);
     });
+  });
+
+  afterAll(async () => {
+    await pool.end();
   });
 });

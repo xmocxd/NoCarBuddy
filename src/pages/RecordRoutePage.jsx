@@ -8,8 +8,8 @@ import { MapContainer, TileLayer, Marker, Popup, CircleMarker, Polyline, useMap 
 import { computeRouteMetrics, formatDistance, formatPaceSecondsPerMi } from "../utils/routeMetrics.js";
 
 const DEFAULT_CENTER = [39.8283, -98.5795];
-const DEFAULT_ZOOM = 16;
-const LOCATION_ZOOM = 16;
+const DEFAULT_ZOOM = 20;
+const LOCATION_ZOOM = 20;
 const OSM_TILES = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
@@ -26,7 +26,8 @@ const greenPinIcon = new L.DivIcon({
     popupAnchor: [0, -41],
 });
 
-const GPS_POLL_INTERVAL_MS = 5000;
+/** Minimum time between recorded points (watchPosition may fire more often). */
+const GPS_MIN_SAMPLE_INTERVAL_MS = 1000;
 
 function FlyToFirstPosition({ firstPosition }) {
     const map = useMap();
@@ -72,7 +73,9 @@ function RecordRoutePage() {
     const [testMoveGpsEnabled, setTestMoveGpsEnabled] = useState(false);
     const testGpsFetchCountRef = useRef(0);
     const timerRef = useRef(null);
-    const gpsIntervalRef = useRef(null);
+    const gpsWatchIdRef = useRef(null);
+    const gpsPollIntervalRef = useRef(null);
+    const lastGpsSampleAtRef = useRef(0);
     const hasAutoStartedRef = useRef(false);
     const pointsLogRef = useRef(null);
     const noSleepRef = useRef(null);
@@ -155,6 +158,9 @@ function RecordRoutePage() {
 
     useEffect(() => {
         if (!routeId || !isRecording) return;
+        if (!navigator.geolocation) return;
+
+        lastGpsSampleAtRef.current = 0;
 
         function addPoint(lat, lng) {
             axios
@@ -167,33 +173,70 @@ function RecordRoutePage() {
                 .catch((err) => console.error("Failed to add route point:", err));
         }
 
-        function fetchLocation() {
-            if (!navigator.geolocation) return;
+        function applyTestOffset(lat, lng) {
+            const count = testGpsFetchCountRef.current;
+            testGpsFetchCountRef.current += 1;
+            const baseDegrees = 0.00005 * (1 + count);
+            return {
+                lat: lat + (Math.random() * 2 - 1) * baseDegrees,
+                lng: lng + (Math.random() * 2 - 1) * baseDegrees,
+            };
+        }
+
+        function recordSampleFromCoords(lat, lng) {
+            const now = Date.now();
+            if (now - lastGpsSampleAtRef.current < GPS_MIN_SAMPLE_INTERVAL_MS) return;
+            lastGpsSampleAtRef.current = now;
+
+            let outLat = lat;
+            let outLng = lng;
+            if (testMoveGpsEnabled) {
+                const o = applyTestOffset(lat, lng);
+                outLat = o.lat;
+                outLng = o.lng;
+            }
+            addPoint(outLat, outLng);
+        }
+
+        function onPosition(pos) {
+            recordSampleFromCoords(pos.coords.latitude, pos.coords.longitude);
+        }
+
+        function onError(err) {
+            console.warn("Geolocation error:", err.message);
+        }
+
+        function pollCurrentPosition() {
             navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    let lat = pos.coords.latitude;
-                    let lng = pos.coords.longitude;
-                    if (testMoveGpsEnabled) {
-                        const count = testGpsFetchCountRef.current;
-                        testGpsFetchCountRef.current += 1;
-                        const baseDegrees = 0.00005 * (1 + count);
-                        lat += (Math.random() * 2 - 1) * baseDegrees;
-                        lng += (Math.random() * 2 - 1) * baseDegrees;
-                    }
-                    addPoint(lat, lng);
-                },
-                (err) => console.warn("Geolocation error:", err.message),
+                (pos) => onPosition(pos),
+                onError,
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
         }
 
-        fetchLocation();
-        gpsIntervalRef.current = setInterval(fetchLocation, GPS_POLL_INTERVAL_MS);
+        // Test mode: poll on an interval so we still get points when stationary (watchPosition often does not fire).
+        if (testMoveGpsEnabled) {
+            pollCurrentPosition();
+            gpsPollIntervalRef.current = setInterval(pollCurrentPosition, GPS_MIN_SAMPLE_INTERVAL_MS);
+            return () => {
+                if (gpsPollIntervalRef.current != null) {
+                    clearInterval(gpsPollIntervalRef.current);
+                    gpsPollIntervalRef.current = null;
+                }
+            };
+        }
+
+        const watchId = navigator.geolocation.watchPosition(onPosition, onError, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
+        });
+        gpsWatchIdRef.current = watchId;
 
         return () => {
-            if (gpsIntervalRef.current) {
-                clearInterval(gpsIntervalRef.current);
-                gpsIntervalRef.current = null;
+            if (gpsWatchIdRef.current != null) {
+                navigator.geolocation.clearWatch(gpsWatchIdRef.current);
+                gpsWatchIdRef.current = null;
             }
         };
     }, [routeId, isRecording, testMoveGpsEnabled]);
@@ -260,15 +303,15 @@ function RecordRoutePage() {
 
     if (!allowed) {
         return (
-            <div className="w-full max-w-2xl mx-auto px-4 py-4 pt-20 text-center text-slate-300">
+            <div className="w-full max-w-none -mx-4 px-0 sm:mx-auto sm:max-w-2xl sm:px-4 py-4 pt-20 text-center text-slate-300">
                 Loading...
             </div>
         );
     }
 
     return (
-        <div className="w-full max-w-2xl mx-auto px-4 py-4 pt-20 pb-32">
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl shadow-2xl p-6 sm:p-8 border border-slate-700">
+        <div className="w-full max-w-none -mx-4 px-0 sm:mx-auto sm:max-w-2xl sm:px-4 py-4 pt-20 pb-32">
+            <div className="bg-slate-800/50 backdrop-blur-sm rounded-none sm:rounded-xl shadow-2xl px-4 py-6 sm:p-8 border-y sm:border border-slate-700">
                 <div className="mb-6 -mt-1 flex flex-row justify-between items-center gap-3">
                     <button
                         type="button"
@@ -306,15 +349,21 @@ function RecordRoutePage() {
                     </div>
                 </div>
 
-                <div className="w-full max-w-xl aspect-square mx-auto rounded-xl overflow-hidden border border-slate-700/80 shadow-xl mb-6">
+                <div className="w-full max-w-none -mx-4 sm:mx-auto sm:max-w-xl aspect-square rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-slate-700/80 shadow-xl mb-6">
                     <MapContainer
                         center={DEFAULT_CENTER}
                         zoom={DEFAULT_ZOOM}
+                        maxZoom={LOCATION_ZOOM}
                         scrollWheelZoom={true}
                         zoomControl={false}
-                        className="h-full w-full rounded-xl z-0"
+                        className="h-full w-full rounded-none sm:rounded-xl z-0"
                     >
-                        <TileLayer attribution={OSM_ATTRIBUTION} url={OSM_TILES} />
+                        <TileLayer
+                            attribution={OSM_ATTRIBUTION}
+                            url={OSM_TILES}
+                            maxZoom={LOCATION_ZOOM}
+                            maxNativeZoom={19}
+                        />
                         <FlyToFirstPosition firstPosition={points.length > 0 ? points[0] : null} />
                         {points.length >= 2 && (
                             <Polyline

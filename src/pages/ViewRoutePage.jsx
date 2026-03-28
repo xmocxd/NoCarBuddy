@@ -31,7 +31,7 @@ function FitRouteBounds({ points }) {
         if (!points || points.length === 0) return;
         const latlngs = points.map((p) => [p.lat, p.lng]);
         const bounds = L.latLngBounds(latlngs);
-        map.fitBounds(bounds, { padding: [24, 24], maxZoom: 16 });
+        map.fitBounds(bounds, { padding: [24, 24], maxZoom: 20 });
     }, [map, points]);
     return null;
 }

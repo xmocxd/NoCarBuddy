@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 
 const DEFAULT_CENTER = [39.8283, -98.5795];
 const DEFAULT_ZOOM = 4;
-const LOCATION_ZOOM = 14;
+const LOCATION_ZOOM = 20;
 
 const OSM_TILES = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
