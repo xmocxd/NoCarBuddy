@@ -39,7 +39,7 @@ This guide walks through hosting the full NoCarBuddy app (React frontend + Expre
    | **Branch** | `main` (or your default branch) |
    | **Runtime** | **Node** |
    | **Build Command** | `npm install && cd server && npm install && cd .. && npm run build` |
-   | **Start Command** | `node server/server.js` |
+   | **Start Command** | `node server/server.js` (or `npm run start:prod`) |
    | **Instance Type** | **Free** |
 
 4. Under **Environment**, add variables (click **Add Environment Variable** for each). You can paste the same keys as in a local `.env`, but **never commit secrets**—only set them in the Render dashboard.
@@ -75,8 +75,9 @@ Render will run the build command (install root deps, install server deps, run `
 
 - **Build**: `npm install && cd server && npm install && cd .. && npm run build`  
   - Installs root and server dependencies and builds the Vite frontend into `dist/`.
-- **Start**: `node server/server.js`  
+- **Start**: `node server/server.js` (same as `npm run start:prod`)  
   - Must be run from the **repository root** so the server can find `dist/` and the root `.env` (if you add one; on Render you use the dashboard env vars).
+  - **Do not** use `npm start` on Render—that runs the local dev stack (Vite + nodemon) and will not bind to Render’s port correctly.
 
 ---
 
@@ -161,6 +162,9 @@ Use this when you want real **set-password** emails in production. NoCarBuddy se
 
 - **Admin or login not working**
   - Verify `JWT_SECRET`, `ADMIN_USER`, and `ADMIN_PASSWORD` are set. Cookies are set with `secure: true` in production; use HTTPS (Render provides it).
+
+- **`nodemon: not found` or “No open ports detected” / deploy never goes Live**
+  - The Web Service **Start Command** is almost certainly `npm start`. Change it to **`node server/server.js`** or **`npm run start:prod`** and ensure **`NODE_ENV=production`** is set. `npm start` runs Vite and nodemon for local development only; production must run the Node server alone so it listens on `PORT`.
 
 - **Cold starts**
   - Normal on the free tier. Consider pinging the service on a schedule (e.g. UptimeRobot) if you want it to stay warm, but that can use more of your 750 hours.
