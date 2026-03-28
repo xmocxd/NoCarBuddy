@@ -97,7 +97,9 @@ This runs the React dev server and the Express API together via `concurrently`.
 
 *(NOTE: TESTED ON WINDOWS 11 USING WSL)*
 
-***WSL / Vite build (Rollup):** If `vite build` fails with `Cannot find module @rollup/rollup-linux-x64-gnu`, Rollup’s optional native package for **Linux** was never installed. That usually means **`npm` came from Windows** (e.g. `which npm` shows `/mnt/c/Program Files/nodejs/npm`) while **Node** runs as Linux in WSL—npm installs Windows binaries, but Rollup then looks for the Linux binary at runtime.*
+### Known Issues
+
+***WSL / Vite build (Rollup) error:** If `vite build` fails with `Cannot find module @rollup/rollup-linux-x64-gnu`, Rollup’s optional native package for **Linux** was never installed. That usually means **`npm` came from Windows** (e.g. `which npm` shows `/mnt/c/Program Files/nodejs/npm`) while **Node** runs as Linux in WSL—npm installs Windows binaries, but Rollup then looks for the Linux binary at runtime.*
 
 *Running the following command will usually fix the issue (removes and reinstalls all node modules on front end and server):*
 
