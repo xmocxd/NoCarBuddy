@@ -102,12 +102,12 @@ This runs the React dev server and the Express API together via `concurrently`.
 *Use **Node and npm installed inside WSL** (e.g. Ubuntu `apt install nodejs npm`, or [nvm](https://github.com/nvm-sh/nvm)), then confirm `which npm` is under `/usr/...` or your home directory, **not** under `/mnt/c/Program Files/`. From the repo root:*
 
 ```bash
-rm -rf node_modules
-npm install
+rm -rf node_modules && npm i
+cd server && rm -rf node_modules && npm i
 npm run build
 ```
 
-Repeat for the server if you run tests or the API from WSL: `cd server && rm -rf node_modules && npm install`.
+Repeat for the server if you run tests or the API from WSL: ``.
 
 **2. Run tests (jest / supertest)**
 
