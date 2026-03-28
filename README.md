@@ -8,6 +8,8 @@ NoCarBuddy is a proof-of-concept app to track GPS routes for walking and running
 
 PLEASE NOTE that new user verification emails come from an email API service (Resend) and **may go to your spam folder!!**
 
+If the render instance is not working for whatever reason, see below under [Local Setup](#local-setup)
+
 *(NOTE: TESTED ON IPHONE / iOS Version )*
 
 ## App Overview
@@ -77,13 +79,13 @@ If testing locally, or email verification link is not being delivered, the serve
 
 
 
-## Quick start
+## Quick Start
 
 **On a mobile device go to the following URL: https://no-car-buddy.onrender.com/** 
 
 *(NOTE: TESTED ON IPHONE / iOS Version )*
 
-## Local setup
+## Local Setup
 
 To run the app locally and run tests, follow the below instructions:
 
