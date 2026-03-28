@@ -5,11 +5,16 @@ import { useAuth } from "../contexts/AuthContext.jsx";
 import L from "leaflet";
 import NoSleep from "nosleep.js";
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker, Polyline, useMap } from "react-leaflet";
-import { computeRouteMetrics, formatDistance, formatPaceSecondsPerMi } from "../utils/routeMetrics.js";
+import {
+    computeRouteMetrics,
+    formatDistance,
+    formatPaceSecondsPerMi,
+} from "../utils/routeMetrics.js";
+import { shouldAcceptGpsCandidate, acceptGpsPoint, DEFAULT_GPS_OUTLIER_MULTIPLIER } from "../utils/gpsOutlier.js";
 
 const DEFAULT_CENTER = [39.8283, -98.5795];
-const DEFAULT_ZOOM = 18;
-const LOCATION_ZOOM = 18;
+const DEFAULT_ZOOM = 19;
+const LOCATION_ZOOM = 19;
 const OSM_TILES = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
@@ -27,7 +32,7 @@ const greenPinIcon = new L.DivIcon({
 });
 
 /** Minimum time between recorded points (watchPosition may fire more often). */
-const GPS_MIN_SAMPLE_INTERVAL_MS = 1000;
+const GPS_MIN_SAMPLE_INTERVAL_MS = 2000;
 
 /** Keeps the map centered on the latest recorded GPS position as it updates. */
 function FollowLatestPosition({ lastPosition }) {
@@ -77,6 +82,11 @@ function RecordRoutePage() {
     const gpsWatchIdRef = useRef(null);
     const gpsPollIntervalRef = useRef(null);
     const lastGpsSampleAtRef = useRef(0);
+    const gpsSegmentStateRef = useRef({
+        lastAccepted: null,
+        segmentDistSumMeters: 0,
+        segmentCount: 0,
+    });
     const hasAutoStartedRef = useRef(false);
     const pointsLogRef = useRef(null);
     const noSleepRef = useRef(null);
@@ -162,6 +172,7 @@ function RecordRoutePage() {
         if (!navigator.geolocation) return;
 
         lastGpsSampleAtRef.current = 0;
+        gpsSegmentStateRef.current = { lastAccepted: null, segmentDistSumMeters: 0, segmentCount: 0 };
 
         function addPoint(lat, lng) {
             axios
@@ -184,10 +195,17 @@ function RecordRoutePage() {
             };
         }
 
+        function shouldAcceptGpsPoint(lat, lng) {
+            return shouldAcceptGpsCandidate({ lat, lng }, gpsSegmentStateRef.current, DEFAULT_GPS_OUTLIER_MULTIPLIER);
+        }
+
+        function recordAcceptedGpsRefs(lat, lng) {
+            gpsSegmentStateRef.current = acceptGpsPoint({ lat, lng }, gpsSegmentStateRef.current);
+        }
+
         function recordSampleFromCoords(lat, lng) {
             const now = Date.now();
             if (now - lastGpsSampleAtRef.current < GPS_MIN_SAMPLE_INTERVAL_MS) return;
-            lastGpsSampleAtRef.current = now;
 
             let outLat = lat;
             let outLng = lng;
@@ -196,6 +214,10 @@ function RecordRoutePage() {
                 outLat = o.lat;
                 outLng = o.lng;
             }
+            if (!shouldAcceptGpsPoint(outLat, outLng)) return;
+
+            lastGpsSampleAtRef.current = now;
+            recordAcceptedGpsRefs(outLat, outLng);
             addPoint(outLat, outLng);
         }
 

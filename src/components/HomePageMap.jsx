@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 
 const DEFAULT_CENTER = [39.8283, -98.5795];
 const DEFAULT_ZOOM = 4;
-const LOCATION_ZOOM = 18;
+const LOCATION_ZOOM = 19;
 
 const OSM_TILES = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
@@ -80,11 +80,17 @@ export default function HomePageMap({ className = "" }) {
             <MapContainer
                 center={DEFAULT_CENTER}
                 zoom={DEFAULT_ZOOM}
+                maxZoom={LOCATION_ZOOM}
                 scrollWheelZoom={true}
                 zoomControl={false}
                 className="h-full w-full rounded-xl z-0"
             >
-                <TileLayer attribution={OSM_ATTRIBUTION} url={OSM_TILES} />
+                <TileLayer
+                    attribution={OSM_ATTRIBUTION}
+                    url={OSM_TILES}
+                    maxZoom={LOCATION_ZOOM}
+                    maxNativeZoom={19}
+                />
                 <LocationController
                     onLocationFound={handleLocationFound}
                     onError={handleLocationError}
