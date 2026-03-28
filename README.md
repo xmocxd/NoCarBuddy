@@ -102,7 +102,7 @@ This runs the React dev server and the Express API together via `concurrently`.
 *Running the following command will usually fix the issue (removes and reinstalls all node modules on front end and server):*
 
 ```bash
-rm -rf node_modules && npm i && cd server && rm -rf node_modules && npm i && npm run build
+rm -rf node_modules && npm i && cd server && rm -rf node_modules && npm i && cd .. && npm run build
 ```
 
 **2. Run tests (jest / supertest)**
