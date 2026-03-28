@@ -400,7 +400,7 @@ function RecordRoutePage() {
                     </div>
                 </div>
 
-                <div className="w-full max-w-none sm:mx-0 sm:px-0 sm:max-w-xl aspect-square rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-slate-700/80 shadow-xl mb-6">
+                <div className="w-full max-w-none mx-auto sm:px-0 sm:max-w-xl aspect-square rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-slate-700/80 shadow-xl mb-6">
                     <MapContainer
                         center={DEFAULT_CENTER}
                         zoom={DEFAULT_ZOOM}
@@ -408,7 +408,7 @@ function RecordRoutePage() {
                         scrollWheelZoom={true}
                         zoomControl={false}
                         className="h-full w-full rounded-none sm:rounded-xl z-0"
-                        style={{ height: '400px', width: '100%' }}
+                        style={{ width: '100%' }}
                     >
                         <TileLayer
                             attribution={OSM_ATTRIBUTION}
