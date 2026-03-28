@@ -36,7 +36,8 @@ export function createApp(options = {}) {
   if (isProduction) {
     const distPath = path.join(__dirname, '..', 'dist');
     app.use(express.static(distPath));
-    app.get('*', (req, res, next) => {
+    // Express 5 / path-to-regexp v8 rejects bare '*'; named wildcard is required.
+    app.get('/*splat', (req, res, next) => {
       if (req.path.startsWith('/api')) return next();
       res.sendFile(path.join(distPath, 'index.html'));
     });
