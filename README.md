@@ -4,7 +4,9 @@ NoCarBuddy is a proof-of-concept app to track GPS routes for walking and running
 
 ## Quick Start
 
-**On a mobile device go to the following URL:** 
+**On a mobile device go to the following URL: https://no-car-buddy.onrender.com/** 
+
+PLEASE NOTE that new user verification emails come from an email API service (Resend) and **may go to your spam folder!!**
 
 *(NOTE: TESTED ON IPHONE / iOS Version )*
 
@@ -77,7 +79,7 @@ If testing locally, or email verification link is not being delivered, the serve
 
 ## Quick start
 
-**On a mobile device go to the following URL:** 
+**On a mobile device go to the following URL: https://no-car-buddy.onrender.com/** 
 
 *(NOTE: TESTED ON IPHONE / iOS Version )*
 

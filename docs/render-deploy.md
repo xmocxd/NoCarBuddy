@@ -102,6 +102,8 @@ See [config-env.md](config-env.md) for full configuration options.
 
 Use this when you want real **set-password** emails in production. NoCarBuddy sends mail through the [Resend](https://resend.com/) HTTP API (`server/email.js`). Resend’s free tier is enough for low volume. Add **environment variables** on your Render Web Service (below).
 
+**NOTE: WHEN USING RESEND, MAILS MAY SHOW UP IN SPAM FOLDER**
+
 ### 1. Create a Resend account and verify a domain
 
 1. Sign up at [Resend](https://resend.com/) and open **[Domains](https://resend.com/domains)**.
