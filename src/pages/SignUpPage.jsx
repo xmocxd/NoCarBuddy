@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import axios from "axios";
 
 function SignUpPage() {
-
-    // initial form state, builds the form within component return based on this structure
     const initial = {
         email: { value: '', text: 'Email', type: 'text', validator: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+(\.[a-zA-Z]{2,})+$/, valid: true },
         firstName: { value: '', text: 'First Name', type: 'text', validator: /^[a-zA-Z\-. ]+$/, valid: true },
@@ -18,8 +16,6 @@ function SignUpPage() {
     const [formValid, setFormValid] = useState(true);
 
     function validateForm(state) {
-        // validate form, will update state with validation flags which can be used to highlight invalid fields
-
         let formValid = true;
         let newState = { ...state };
 
@@ -47,14 +43,12 @@ function SignUpPage() {
     }
 
     function addUser(user) {
-        // send POST request to add user
         axios.post('/api/users', {
             firstName: user.firstName.value,
             lastName: user.lastName.value,
             email: user.email.value,
             state: 'pending'
-        }).then(response => {
-            console.log('User added:', response.data);
+        }).then(() => {
             navigate('/confirmation', { state: { message: 'Thank you for signing up! Please check your email for confirmation and next steps.' } });
         }).catch(error => {
             console.error('Error adding user:', error);
@@ -63,8 +57,6 @@ function SignUpPage() {
 
 
     function updateField({ field, value }) {
-        // update field value in state
-
         setFormState(state => ({
             ...state,
             [field]: { ...state[field], value: value }
@@ -72,18 +64,15 @@ function SignUpPage() {
     }
 
     function submit() {
-        // validate form before submitting
-
         const { formValid, newState } = validateForm(formState);
-        
+
         setFormValid(formValid);
 
         if (formValid) {
             addUser(newState);
-            console.log('Form submitted:', newState);
-            setFormState(initial); // clear form on submit
+            setFormState(initial);
         } else {
-            setFormState(newState); // update state with validation results
+            setFormState(newState);
         }
     }
 

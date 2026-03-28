@@ -11,8 +11,7 @@ function AdminLoginPage() {
 
     function submit() {
         axios.post('/api/admin/login', { userName, password })
-            .then(response => {
-                console.log('Admin login successful:', response.data);
+            .then(() => {
                 navigate('/admin');
             })
             .catch(error => {

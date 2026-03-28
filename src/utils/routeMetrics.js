@@ -1,9 +1,4 @@
-/**
- * Same route metrics as server/routeMetrics.js (keep in sync for live UI vs saved values).
- */
-
 const EARTH_RADIUS_M = 6371000;
-/** International mile in meters (exact definition). */
 export const METERS_PER_MILE = 1609.344;
 const FEET_PER_METER = 3.28084;
 export const STEPS_PER_HOUR = 6000;
@@ -22,11 +17,6 @@ export function haversineMeters(lat1, lng1, lat2, lng2) {
     return EARTH_RADIUS_M * c;
 }
 
-/**
- * @param {Array<{ lat: number, lng: number }>} points
- * @param {number} durationSeconds
- * @returns {{ distanceMeters: number, estimatedSteps: number, paceSecondsPerMi: number | null }}
- */
 export function computeRouteMetrics(points, durationSeconds) {
     const dur = Number(durationSeconds);
     const safeDur = Number.isFinite(dur) && dur >= 0 ? dur : 0;
@@ -60,7 +50,6 @@ export function computeRouteMetrics(points, durationSeconds) {
     };
 }
 
-/** e.g. "1.25 mi" or "240 ft" for short distances */
 export function formatDistance(meters) {
     if (meters == null || !Number.isFinite(meters) || meters < 0) return "—";
     const miles = meters / METERS_PER_MILE;
@@ -69,7 +58,6 @@ export function formatDistance(meters) {
     return `${Math.round(meters * FEET_PER_METER)} ft`;
 }
 
-/** Pace as min:sec per mile, e.g. "12:04 /mi", or "—" */
 export function formatPaceSecondsPerMi(paceSecondsPerMi) {
     if (paceSecondsPerMi == null || !Number.isFinite(paceSecondsPerMi) || paceSecondsPerMi <= 0) return "—";
     const totalSec = Math.round(paceSecondsPerMi);

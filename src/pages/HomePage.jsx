@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import HomePageMap from "./HomePageMap.jsx";
+import HomePageMap from "../components/HomePageMap.jsx";
 
 function HomePage() {
     return (
@@ -13,12 +13,10 @@ function HomePage() {
                         Find your way through the world on your own terms.
                     </p>
                     <p className="text-lg text-slate-400">
-                        Record and annotate Walking and Biking (TODO) paths you discover in your local area.
-                        Link them together (TODO) to create enjoyable No-Car options to get to your favorite destinations.
+                        Record walking and biking routes you find nearby and link them into trips that skip the car.
                     </p>
                     <p className="text-lg text-red-400">
-                        <em>PLEASE NOTE: This is a test / proof-of-concept app, and has GPS tracking limitations.
-                        You must keep your phone open while using the app - it will not work as intended if you lock your phone.</em>
+                        <em>GPS works best with the screen on; locking the phone can interrupt recording.</em>
                     </p>
                     <p className="text-lg text-slate-400">
                         Sign up for an account to get started

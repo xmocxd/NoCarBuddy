@@ -1,30 +1,29 @@
 import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
 import NavBar from "./components/NavBar.jsx";
-import HomePage from "./components/HomePage.jsx";
-import NotFound from "./components/NotFound.jsx";
-import AdminPage from "./components/AdminPage.jsx";
-import SignUpPage from "./components/SignUpPage.jsx";
-import ConfirmationPage from "./components/ConfirmationPage.jsx";
-import SetPasswordPage from "./components/SetPasswordPage.jsx";
-import LoginPage from "./components/LoginPage.jsx";
-import DashboardPage from "./components/DashboardPage.jsx";
-import RecordRoutePage from "./components/RecordRoutePage.jsx";
-import ViewRoutePage from "./components/ViewRoutePage.jsx";
-import AdminLoginPage from "./components/AdminLoginPage.jsx";
+import HomePage from "./pages/HomePage.jsx";
+import NotFound from "./pages/NotFound.jsx";
+import AdminPage from "./pages/AdminPage.jsx";
+import SignUpPage from "./pages/SignUpPage.jsx";
+import ConfirmationPage from "./pages/ConfirmationPage.jsx";
+import SetPasswordPage from "./pages/SetPasswordPage.jsx";
+import LoginPage from "./pages/LoginPage.jsx";
+import DashboardPage from "./pages/DashboardPage.jsx";
+import RecordRoutePage from "./pages/RecordRoutePage.jsx";
+import ViewRoutePage from "./pages/ViewRoutePage.jsx";
+import AdminLoginPage from "./pages/AdminLoginPage.jsx";
 
-const pages = [
+const navLinks = [
     { path: "signup/", title: "Sign Up" },
     { path: "login/", title: "Log In" },
     { path: "dashboard/", title: "Dashboard" },
     { path: "admin/", title: "Admin" },
-]
+];
 
 const router = createBrowserRouter([
     {
-        // main element to display routes within
         element: (
             <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-zinc-900 via-zinc-800 to-zinc-900 px-4">
-                <NavBar pages={pages} />
+                <NavBar pages={navLinks} />
                 <Outlet />
             </div>
         ),
@@ -44,14 +43,6 @@ const router = createBrowserRouter([
     },
 ]);
 
-function App ()
-{
-    
-    return (
-        <>
-        <RouterProvider router={router} />
-        </>
-    );
+export default function App() {
+    return <RouterProvider router={router} />;
 }
-
-export default App;

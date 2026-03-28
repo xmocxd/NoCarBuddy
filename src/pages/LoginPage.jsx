@@ -1,18 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useAuth } from "../contexts/AuthContext.jsx";
 
-/**
- * User login page: email + password. Only users who have set a password
- * (via the link in the sign-up email) can log in. On success we redirect to the dashboard.
- * We send credentials so the server can set the JWT cookie and the browser will store it.
- */
 function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const navigate = useNavigate();
+    const { refreshUser } = useAuth();
 
     function handleSubmit(e) {
         e.preventDefault();
@@ -21,6 +18,7 @@ function LoginPage() {
 
         axios
             .post("/api/users/login", { email, password }, { withCredentials: true })
+            .then(() => refreshUser())
             .then(() => {
                 navigate("/dashboard/", { replace: true });
             })

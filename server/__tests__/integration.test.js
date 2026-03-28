@@ -1,9 +1,4 @@
-/**
- * Integration tests against PostgreSQL. Skipped when DATABASE_URL is unset.
- * Run in WSL with a local DB, e.g.:
- *   export DATABASE_URL=postgres://user:pass@localhost:5432/nocarbuddy
- *   npm test
- */
+// Needs DATABASE_URL or TEST_DATABASE_URL (otherwise skipped).
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import request from 'supertest';

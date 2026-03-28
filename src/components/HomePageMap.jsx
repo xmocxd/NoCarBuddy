@@ -2,14 +2,13 @@ import { useEffect, useState, useRef } from "react";
 import L from "leaflet";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 
-const DEFAULT_CENTER = [39.8283, -98.5795]; // US center
+const DEFAULT_CENTER = [39.8283, -98.5795];
 const DEFAULT_ZOOM = 4;
 const LOCATION_ZOOM = 14;
 
 const OSM_TILES = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
-/** Bright emerald green matching app theme (same hue as nav/buttons) */
 const PIN_GREEN = "#34d399";
 const PIN_GREEN_DARK = "#059669";
 
@@ -24,9 +23,6 @@ const greenPinIcon = new L.DivIcon({
     popupAnchor: [0, -41],
 });
 
-/**
- * Requests device location once, flies to it once, then does nothing else with the map.
- */
 function LocationController({ onLocationFound, onError }) {
     const map = useMap();
     const doneRef = useRef(false);

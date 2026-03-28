@@ -1,4 +1,4 @@
-import BackHomeButton from "./BackHomeButton.jsx";
+import BackHomeButton from "../components/BackHomeButton.jsx";
 
 function NotFound() {
     return (

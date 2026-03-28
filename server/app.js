@@ -1,6 +1,3 @@
-/**
- * Express application factory (no listen). Used by server.js and by Supertest.
- */
 import path from 'path';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
@@ -14,10 +11,6 @@ import setPassword from './routes/setPassword.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-/**
- * @param {object} [options]
- * @param {boolean} [options.isProduction] - Defaults from NODE_ENV === 'production'
- */
 export function createApp(options = {}) {
   const isProduction = options.isProduction ?? process.env.NODE_ENV === 'production';
 
@@ -38,9 +31,7 @@ export function createApp(options = {}) {
   app.use('/api/set-password', setPassword);
   app.use('/api/admin', admin);
 
-  app.get('/api/message', (req, res) => {
-    res.send('Hello World!');
-  });
+  app.get('/api/message', (req, res) => res.send('Hello World!'));
 
   if (isProduction) {
     const distPath = path.join(__dirname, '..', 'dist');

@@ -11,9 +11,7 @@ function AdminPage() {
 
     async function checkAdmin() {
         try {
-            // browser will automatically send the http-only cookie for the jwt token
-            const response = await axios.get('/api/admin/check', { withCredentials: true });
-            console.log('Protected data fetched:', response.data);
+            await axios.get('/api/admin/check', { withCredentials: true });
             setAdminStatus(true);
         } catch (error) {
             console.error('Failed to fetch protected data:', error);
@@ -29,7 +27,6 @@ function AdminPage() {
     }, []);
 
     async function refreshUsers() {
-        // get user list and update state
         axios.get('/api/users')
             .then(response => {
                 setUsers(response.data);

@@ -10,9 +10,6 @@ const DEFAULT_ZOOM = 4;
 const OSM_TILES = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
-/**
- * Format seconds as HH:MM:SS, or "—" if null/undefined.
- */
 function formatDuration(seconds) {
     if (seconds == null || typeof seconds !== "number" || seconds < 0) return "—";
     const h = Math.floor(seconds / 3600);
@@ -28,7 +25,6 @@ function formatRecordedAt(recordedAt) {
     return d.toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" });
 }
 
-/** Fits the map bounds to include all route points when they are available. */
 function FitRouteBounds({ points }) {
     const map = useMap();
     useEffect(() => {
@@ -40,9 +36,6 @@ function FitRouteBounds({ points }) {
     return null;
 }
 
-/**
- * View route page: shows a single map route's details from the DB, with a link back to the dashboard.
- */
 function ViewRoutePage() {
     const { id } = useParams();
     const navigate = useNavigate();

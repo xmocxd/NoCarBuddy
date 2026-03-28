@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useAuth } from "../contexts/AuthContext.jsx";
 import L from "leaflet";
 import NoSleep from "nosleep.js";
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker, Polyline, useMap } from "react-leaflet";
@@ -27,7 +28,6 @@ const greenPinIcon = new L.DivIcon({
 
 const GPS_POLL_INTERVAL_MS = 5000;
 
-/** Flies the map to the first position once when it becomes available. */
 function FlyToFirstPosition({ firstPosition }) {
     const map = useMap();
     const hasFlownRef = useRef(false);
@@ -39,9 +39,6 @@ function FlyToFirstPosition({ firstPosition }) {
     return null;
 }
 
-/**
- * Format seconds as HH:MM:SS (e.g. 01:05:23).
- */
 function formatDuration(seconds) {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
@@ -50,9 +47,6 @@ function formatDuration(seconds) {
     return `${pad(h)}:${pad(m)}:${pad(s)}`;
 }
 
-/**
- * Auto-name for a new map route: "Walk at YYYY-M-D-HH:MM" (e.g. "Walk at 2026-1-1-03:05").
- */
 function getAutoRouteName(fromDate) {
     const d = fromDate || new Date();
     const year = d.getFullYear();
@@ -63,12 +57,9 @@ function getAutoRouteName(fromDate) {
     return `Walk at ${year}-${month}-${day}-${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
-/**
- * Record map route page: auto-starts recording on load, shows a live timer and route name.
- * Stop and Exit save with the current (auto or edited) name; no prompt. Stop keeps you on the page; Exit returns to dashboard.
- */
 function RecordRoutePage() {
-    const [allowed, setAllowed] = useState(false);
+    const { user, loading: authLoading } = useAuth();
+    const allowed = !!user && !authLoading;
     const [isRecording, setIsRecording] = useState(false);
     const [recordingStartedAt, setRecordingStartedAt] = useState(null);
     const [routeName, setRouteName] = useState("");
@@ -78,9 +69,6 @@ function RecordRoutePage() {
     const [saving, setSaving] = useState(false);
     const [routeId, setRouteId] = useState(null);
     const [points, setPoints] = useState([]);
-    // TEST FUNCTIONALITY - TO REMOVE: toggle to randomly offset GPS for testing
-    const [testMoveGpsEnabled, setTestMoveGpsEnabled] = useState(false);
-    const testGpsFetchCountRef = useRef(0);
     const timerRef = useRef(null);
     const gpsIntervalRef = useRef(null);
     const hasAutoStartedRef = useRef(false);
@@ -100,7 +88,6 @@ function RecordRoutePage() {
         return noSleepRef.current;
     }, []);
 
-    /** NoSleep.js: Wake Lock API or hidden looping video; reduces auto-lock while the page stays visible. */
     useEffect(() => {
         if (!allowed || !isRecording || !keepScreenAwake) {
             if (noSleepRef.current?.isEnabled) noSleepRef.current.disable();
@@ -123,19 +110,11 @@ function RecordRoutePage() {
             .catch(() => {});
     }
 
-    // Auth check on mount
     useEffect(() => {
-        axios
-            .get("/api/users/me", { withCredentials: true })
-            .then(() => setAllowed(true))
-            .catch((err) => {
-                if (err.response?.status === 401 || err.response?.status === 403) {
-                    navigate("/login/", { replace: true });
-                }
-            });
-    }, [navigate]);
+        if (authLoading) return;
+        if (!user) navigate("/login/", { replace: true });
+    }, [authLoading, user, navigate]);
 
-    // Auto-start recording once when page becomes allowed: create route and start timer
     useEffect(() => {
         if (!allowed || hasAutoStartedRef.current) return;
         hasAutoStartedRef.current = true;
@@ -171,7 +150,6 @@ function RecordRoutePage() {
         };
     }, [allowed]);
 
-    // GPS poll every 5 seconds (and once on start): append point to route when we have routeId
     useEffect(() => {
         if (!routeId || !isRecording) return;
 
@@ -190,18 +168,7 @@ function RecordRoutePage() {
             if (!navigator.geolocation) return;
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
-                    let lat = pos.coords.latitude;
-                    let lng = pos.coords.longitude;
-                    // TEST FUNCTIONALITY - TO REMOVE: when enabled, offset coords for testing; base amount increases each fetch, random within same range
-                    if (testMoveGpsEnabled) {
-                        const count = testGpsFetchCountRef.current;
-                        testGpsFetchCountRef.current += 1;
-                        const baseDegrees = 0.00005 * (1 + count);
-                        const range = baseDegrees;
-                        lat += (Math.random() * 2 - 1) * range;
-                        lng += (Math.random() * 2 - 1) * range;
-                    }
-                    addPoint(lat, lng);
+                    addPoint(pos.coords.latitude, pos.coords.longitude);
                 },
                 (err) => console.warn("Geolocation error:", err.message),
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
@@ -217,9 +184,8 @@ function RecordRoutePage() {
                 gpsIntervalRef.current = null;
             }
         };
-    }, [routeId, isRecording, testMoveGpsEnabled]);
+    }, [routeId, isRecording]);
 
-    // When we stop the timer (user clicked Stop or Exit), clear the interval and freeze elapsed
     function stopTimer() {
         if (timerRef.current) {
             clearInterval(timerRef.current);
@@ -272,7 +238,6 @@ function RecordRoutePage() {
         setEditingName(false);
     }
 
-    // Auto-scroll points log to bottom when it exceeds max height and new points are added
     useEffect(() => {
         const el = pointsLogRef.current;
         if (!el || points.length === 0) return;
@@ -307,7 +272,6 @@ function RecordRoutePage() {
                     </button>
                 </div>
 
-                {/* Large live timer */}
                 <div className="text-center py-2">
                     <div className="text-4xl sm:text-2xl md:text-4xl font-mono font-bold text-white tabular-nums">
                         {formatDuration(elapsedSeconds)}
@@ -335,7 +299,6 @@ function RecordRoutePage() {
                     </div>
                 </dl>
 
-                {/* Map */}
                 <div className="w-full max-w-xl aspect-square mx-auto rounded-xl overflow-hidden border border-slate-700/80 shadow-xl mb-6">
                     <MapContainer
                         center={DEFAULT_CENTER}
@@ -370,19 +333,6 @@ function RecordRoutePage() {
 
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center flex-wrap">
-                    {/* TEST FUNCTIONALITY - TO REMOVE: button to toggle test GPS offset */}
-                    <button
-                        type="button"
-                        onClick={() => setTestMoveGpsEnabled((on) => !on)}
-                        className={`rounded-lg py-3 px-6 font-semibold border-2 ${
-                            testMoveGpsEnabled
-                                ? "bg-amber-600 border-amber-500 text-white hover:bg-amber-500"
-                                : "bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600"
-                        }`}
-                        title={testMoveGpsEnabled ? "Test move GPS is ON – coords are offset" : "Toggle test GPS offset (for testing only)"}
-                    >
-                        TEST MOVE GPS {testMoveGpsEnabled ? "ON" : ""}
-                    </button>
                     <button
                         type="button"
                         onClick={handleExit}
@@ -393,7 +343,6 @@ function RecordRoutePage() {
                     </button>
                 </div>
 
-                {/* Prominent route name with edit */}
                 <div className="my-6 p-4 rounded-lg bg-slate-700/50 border border-slate-600">
                     {editingName ? (
                         <div className="flex flex-wrap items-center gap-2">
@@ -440,7 +389,6 @@ function RecordRoutePage() {
                     )}
                 </div>
 
-                {/* Screen stay-awake (NoSleep.js); optional, battery-heavy; no effect if user locks screen */}
                 <div className="my-6 p-4 rounded-lg border border-slate-600 bg-slate-800/40">
                     <label className="flex items-start gap-3 cursor-pointer">
                         <input
@@ -465,7 +413,6 @@ function RecordRoutePage() {
                     )}
                 </div>
 
-                {/* Point log: terminal-style list of each recorded point; scrollable when >400px, auto-scrolls to bottom */}
                 <div
                     ref={pointsLogRef}
                     className="mt-6 rounded-lg border border-slate-600 bg-slate-900 p-3 font-mono text-sm text-slate-300 overflow-x-auto overflow-y-auto min-w-0 max-h-[400px]"

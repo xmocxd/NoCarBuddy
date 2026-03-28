@@ -1,19 +1,7 @@
-/**
- * Database module: single place for PostgreSQL connection and schema.
- *
- * We use a connection pool (pg.Pool) so the server can handle many concurrent
- * requests without opening a new connection per request. The pool reuses
- * connections and limits total open connections.
- *
- * Config comes from environment: DATABASE_URL or PGHOST/PGPORT/PGUSER/PGPASSWORD/PGDATABASE.
- * See docs/config-env.md.
- */
-
 import pg from 'pg';
 
 const { Pool } = pg;
 
-// Build connection config: prefer DATABASE_URL; otherwise use individual env vars.
 function getPoolConfig() {
   if (process.env.DATABASE_URL) {
     return { connectionString: process.env.DATABASE_URL };
@@ -27,15 +15,8 @@ function getPoolConfig() {
   };
 }
 
-/** Shared pool used by all routes. Do not create a new Pool elsewhere. */
 export const pool = new Pool(getPoolConfig());
 
-/**
- * SQL for the users table. We run this on load so the app works without a separate migration.
- * - id: auto-increment primary key (same as previous in-memory curId behavior).
- * - state: explicit column so we can filter/index (e.g. 'pending', 'confirmed').
- * - body: JSONB holds all other request-body fields (name, email, etc.) for flexibility.
- */
 const CREATE_USERS_TABLE = `
   CREATE TABLE IF NOT EXISTS users (
     id    SERIAL PRIMARY KEY,
@@ -44,7 +25,6 @@ const CREATE_USERS_TABLE = `
   );
 `;
 
-/** Map routes (GPS recorded tracks) per user. Each row is one map route (a list of points). duration_seconds = recording length. */
 const CREATE_MAP_ROUTES_TABLE = `
   CREATE TABLE IF NOT EXISTS map_routes (
     id               SERIAL PRIMARY KEY,
@@ -57,13 +37,8 @@ const CREATE_MAP_ROUTES_TABLE = `
   );
 `;
 
-/**
- * Ensure the users and map_routes tables exist. Called once when this module is first used.
- * Uses IF NOT EXISTS so it is safe to run on every startup.
- */
 let schemaInitialized = false;
 
-/** Add duration_seconds to map_routes if the table exists but the column is missing (e.g. existing DBs). */
 const ADD_DURATION_COLUMN = `
   DO $$
   BEGIN
@@ -74,7 +49,6 @@ const ADD_DURATION_COLUMN = `
   END $$;
 `;
 
-/** distance_meters, estimated_steps (6000/h), pace_seconds_per_km — added for existing deployments. */
 const ADD_MAP_ROUTE_METRICS_COLUMNS = `
   DO $$
   BEGIN
@@ -93,7 +67,6 @@ const ADD_MAP_ROUTE_METRICS_COLUMNS = `
   END $$;
 `;
 
-/** pace_seconds_per_mi — preferred; migrate from pace_seconds_per_km where present. */
 const ADD_PACE_SECONDS_PER_MI = `
   DO $$
   BEGIN
@@ -104,7 +77,6 @@ const ADD_PACE_SECONDS_PER_MI = `
   END $$;
 `;
 
-/** Convert legacy km-based pace to seconds per mile (same duration / distance in miles). */
 const MIGRATE_PACE_KM_TO_MI = `
   UPDATE map_routes
   SET pace_seconds_per_mi = pace_seconds_per_km * (1609.344 / 1000.0)
@@ -128,14 +100,6 @@ export async function ensureSchema() {
   }
 }
 
-/**
- * Run a parameterized query using the shared pool.
- * Use this (or pool.query) for all DB access so we use the same pool and avoid SQL injection.
- *
- * @param {string} text - SQL with $1, $2, ... placeholders
- * @param {unknown[]} [params] - Values for the placeholders
- * @returns {Promise<pg.QueryResult>} - result.rows, result.rowCount, etc.
- */
 export async function query(text, params = []) {
   return pool.query(text, params);
 }

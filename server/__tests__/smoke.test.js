@@ -1,6 +1,3 @@
-/**
- * HTTP smoke tests: no PostgreSQL required (routes return before DB or without hitting DB).
- */
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { describe, it, expect, beforeAll } from '@jest/globals';

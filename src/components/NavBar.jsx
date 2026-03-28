@@ -19,6 +19,6 @@ function NavBar({ pages }) {
             })}
         </nav>
     );
-};
+}
 
 export default NavBar;

@@ -1,8 +1,3 @@
-/**
- * Route metrics from GPS points and elapsed time: path length (Haversine),
- * estimated steps at 6000 steps/hour, and pace (seconds per mile).
- */
-
 const EARTH_RADIUS_M = 6371000;
 const METERS_PER_MILE = 1609.344;
 const STEPS_PER_HOUR = 6000;
@@ -11,7 +6,6 @@ function toRad(deg) {
   return (deg * Math.PI) / 180;
 }
 
-/** Haversine distance in meters between two WGS84 lat/lng points. */
 export function haversineMeters(lat1, lng1, lat2, lng2) {
   const dLat = toRad(lat2 - lat1);
   const dLng = toRad(lng2 - lng1);
@@ -22,11 +16,6 @@ export function haversineMeters(lat1, lng1, lat2, lng2) {
   return EARTH_RADIUS_M * c;
 }
 
-/**
- * @param {Array<{ lat: number, lng: number }>} points
- * @param {number} durationSeconds
- * @returns {{ distanceMeters: number, estimatedSteps: number, paceSecondsPerMi: number | null }}
- */
 export function computeRouteMetrics(points, durationSeconds) {
   const dur = Number(durationSeconds);
   const safeDur = Number.isFinite(dur) && dur >= 0 ? dur : 0;

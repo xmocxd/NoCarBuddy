@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom';
-import BackHomeButton from "./BackHomeButton.jsx";
+import BackHomeButton from "../components/BackHomeButton.jsx";
 
 function ConfirmationPage() {
     return (

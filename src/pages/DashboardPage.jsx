@@ -1,48 +1,42 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import { useAuth } from "../contexts/AuthContext.jsx";
 
-/**
- * Dashboard: first page shown after login. Lists the user's recorded map routes in a table
- * (name, date/time, duration, edit, delete) and has a large centered "+" button at the
- * bottom to start recording a new map route (goes to a dedicated recording page).
- */
 function DashboardPage() {
-    const [profile, setProfile] = useState(null);
+    const { user: profile, loading: authLoading, logout } = useAuth();
     const [mapRoutes, setMapRoutes] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [routesLoading, setRoutesLoading] = useState(true);
     const [editingId, setEditingId] = useState(null);
     const [editingName, setEditingName] = useState("");
     const navigate = useNavigate();
 
-    /** Fetch current user and their map routes. Redirect to login if not authenticated. */
-    function fetchData() {
-        axios
-            .get("/api/users/me", { withCredentials: true })
-            .then((res) => {
-                setProfile(res.data);
-                return axios.get("/api/map-routes", { withCredentials: true });
-            })
+    const fetchMapRoutes = useCallback(() => {
+        setRoutesLoading(true);
+        return axios
+            .get("/api/map-routes", { withCredentials: true })
             .then((res) => setMapRoutes(res.data))
             .catch((err) => {
                 if (err.response?.status === 401 || err.response?.status === 403) {
                     navigate("/login/", { replace: true });
                 } else {
-                    setProfile(null);
                     setMapRoutes([]);
                 }
             })
-            .finally(() => setLoading(false));
-    }
-
-    useEffect(() => {
-        fetchData();
+            .finally(() => setRoutesLoading(false));
     }, [navigate]);
 
+    useEffect(() => {
+        if (authLoading) return;
+        if (!profile) {
+            navigate("/login/", { replace: true });
+            return;
+        }
+        fetchMapRoutes();
+    }, [authLoading, profile, navigate, fetchMapRoutes]);
+
     function handleLogout() {
-        axios.post("/api/users/logout", {}, { withCredentials: true }).then(() => {
-            navigate("/", { replace: true });
-        });
+        logout().then(() => navigate("/", { replace: true }));
     }
 
     function startEdit(mapRoute) {
@@ -62,7 +56,7 @@ function DashboardPage() {
             .then(() => {
                 setEditingId(null);
                 setEditingName("");
-                fetchData();
+                fetchMapRoutes();
             })
             .catch((err) => {
                 console.error("Failed to update map route name:", err);
@@ -74,7 +68,7 @@ function DashboardPage() {
         if (!window.confirm("Delete this map route?")) return;
         axios
             .delete(`/api/map-routes/${mapRouteId}`, { withCredentials: true })
-            .then(() => fetchData())
+            .then(() => fetchMapRoutes())
             .catch((err) => console.error("Failed to delete map route:", err));
     }
 
@@ -87,7 +81,6 @@ function DashboardPage() {
         });
     }
 
-    /** Format seconds as HH:MM:SS (e.g. 01:05:23), or "—" if null/undefined. */
     function formatDuration(seconds) {
         if (seconds == null || typeof seconds !== "number" || seconds < 0) return "—";
         const h = Math.floor(seconds / 3600);
@@ -96,6 +89,8 @@ function DashboardPage() {
         const pad = (n) => String(n).padStart(2, "0");
         return `${pad(h)}:${pad(m)}:${pad(s)}`;
     }
+
+    const loading = authLoading || (!!profile && routesLoading);
 
     if (loading) {
         return (
