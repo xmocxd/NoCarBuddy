@@ -3,6 +3,7 @@
 NoCarBuddy is a proof-of-concept app to track GPS routes for walking and running.  It takes a GPS position update every 5 seconds and plots a route, which can be saved to your user account and reviewed later, calculating distance and average steps.
 
 ![Main App View](docs/ss/main.png)
+![Main App View](docs/ss/main.png)
 
 TODO:
 - get the distance and average step calculation
@@ -11,36 +12,35 @@ TODO:
 **This app can be reviewed either locally on a PC (via the TEST MOVE GPS button on the app), or by opening the deployed app on a mobile device (see QUICK START section below)**
 
 ![Test GPS](docs/ss/testgps.png)
-
 Click the TEST MOVE GPS BUTTON to test the app from a stationary PC.  This will artificially add increasing amounts of shift to the fetched gps position to test the mapping feature.
 
 **NOTE -- CHECK THE CONSOLE FOR VERIFICATION LINK IF TESTING LOCALLY:**
 
-!(Verification)[docs/ss/verification.png]
+![Verification](docs/ss/verification.png)
 
 ### Features:
 - Create new user account (sends email verification)
 
-!(Signup)[docs/ss/signup.png]
+![Signup](docs/ss/signup.png)
 
 - Record a route
 
-!(Record)[docs/ss/record.png]
+![Record](docs/ss/record.png)
 
 - View recorded routes
 
-!(View Routes)[docs/ss/viewroutes.png]
+![View Routes](docs/ss/viewroutes.png)
 
 - Delete or edit the name of a route
 
-!(Edit)[docs/ss/edit.png]
+![Edit](docs/ss/edit.png)
 
 - Admin panel:
     - See user activation status
     - Deactivate / Reactivate a user
     - Delete a user
 
-!(Admin)[docs/ss/admin.png]
+![Admin](docs/ss/admin.png)
 
 
 ### Primary technologies used:
@@ -68,7 +68,7 @@ At a later point, if this is ported to react-native, the implementation will be 
 
 If testing locally, or email verification link is not being delivered, the server will print out the verification link to the console on user creation, which can be used to sign up:
 
-!(Verification)[docs/ss/verification.png]
+![Verification](docs/ss/verification.png)
 
 
 
