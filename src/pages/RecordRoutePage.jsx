@@ -11,11 +11,10 @@ import {
     formatPaceSecondsPerMi,
 } from "../utils/routeMetrics.js";
 import {
-    shouldAcceptGpsCandidate,
     acceptGpsPoint,
-    DEFAULT_GPS_OUTLIER_MULTIPLIER,
-    nextOutlierRejectionCounters,
-    nextCooldownAfterAcceptedPoint,
+    passesTriggerBand,
+    passesRecheckBand,
+    shouldForceAcceptNextSample,
 } from "../utils/gpsOutlier.js";
 
 const DEFAULT_CENTER = [39.8283, -98.5795];
@@ -93,8 +92,12 @@ function RecordRoutePage() {
         segmentDistSumMeters: 0,
         segmentCount: 0,
     });
-    const gpsOutlierRejectedCountRef = useRef(0);
-    const gpsOutlierCooldownAcceptsRef = useRef(0);
+    /** After a strict (7×) drop, use 9× recheck until accept or too many failures. */
+    const gpsRecoveryModeRef = useRef(false);
+    /** Count of drops outside recheck band while in recovery. */
+    const gpsRecoveryFailuresRef = useRef(0);
+    /** Next sample accepted with no distance check, then cleared. */
+    const gpsForceNextSampleRef = useRef(false);
     const hasAutoStartedRef = useRef(false);
     const pointsLogRef = useRef(null);
     const noSleepRef = useRef(null);
@@ -181,8 +184,9 @@ function RecordRoutePage() {
 
         lastGpsSampleAtRef.current = 0;
         gpsSegmentStateRef.current = { lastAccepted: null, segmentDistSumMeters: 0, segmentCount: 0 };
-        gpsOutlierRejectedCountRef.current = 0;
-        gpsOutlierCooldownAcceptsRef.current = 0;
+        gpsRecoveryModeRef.current = false;
+        gpsRecoveryFailuresRef.current = 0;
+        gpsForceNextSampleRef.current = false;
 
         function addPoint(lat, lng) {
             axios
@@ -205,11 +209,6 @@ function RecordRoutePage() {
             };
         }
 
-        function shouldAcceptGpsPoint(lat, lng) {
-            if (gpsOutlierCooldownAcceptsRef.current > 0) return true;
-            return shouldAcceptGpsCandidate({ lat, lng }, gpsSegmentStateRef.current, DEFAULT_GPS_OUTLIER_MULTIPLIER);
-        }
-
         function recordAcceptedGpsRefs(lat, lng) {
             gpsSegmentStateRef.current = acceptGpsPoint({ lat, lng }, gpsSegmentStateRef.current);
         }
@@ -225,20 +224,44 @@ function RecordRoutePage() {
                 outLat = o.lat;
                 outLng = o.lng;
             }
-            if (!shouldAcceptGpsPoint(outLat, outLng)) {
-                const next = nextOutlierRejectionCounters(
-                    gpsOutlierRejectedCountRef.current,
-                    gpsOutlierCooldownAcceptsRef.current
-                );
-                gpsOutlierRejectedCountRef.current = next.rejectedCount;
-                gpsOutlierCooldownAcceptsRef.current = next.cooldownAcceptsRemaining;
+            const candidate = { lat: outLat, lng: outLng };
+            const state = gpsSegmentStateRef.current;
+
+            if (gpsForceNextSampleRef.current) {
+                lastGpsSampleAtRef.current = now;
+                gpsForceNextSampleRef.current = false;
+                gpsRecoveryModeRef.current = false;
+                gpsRecoveryFailuresRef.current = 0;
+                recordAcceptedGpsRefs(outLat, outLng);
+                addPoint(outLat, outLng);
                 return;
             }
 
-            lastGpsSampleAtRef.current = now;
-            gpsOutlierCooldownAcceptsRef.current = nextCooldownAfterAcceptedPoint(gpsOutlierCooldownAcceptsRef.current);
-            recordAcceptedGpsRefs(outLat, outLng);
-            addPoint(outLat, outLng);
+            if (gpsRecoveryModeRef.current) {
+                if (passesRecheckBand(candidate, state)) {
+                    lastGpsSampleAtRef.current = now;
+                    gpsRecoveryModeRef.current = false;
+                    gpsRecoveryFailuresRef.current = 0;
+                    recordAcceptedGpsRefs(outLat, outLng);
+                    addPoint(outLat, outLng);
+                    return;
+                }
+                gpsRecoveryFailuresRef.current += 1;
+                if (shouldForceAcceptNextSample(gpsRecoveryFailuresRef.current)) {
+                    gpsForceNextSampleRef.current = true;
+                }
+                return;
+            }
+
+            if (passesTriggerBand(candidate, state)) {
+                lastGpsSampleAtRef.current = now;
+                recordAcceptedGpsRefs(outLat, outLng);
+                addPoint(outLat, outLng);
+                return;
+            }
+
+            gpsRecoveryModeRef.current = true;
+            gpsRecoveryFailuresRef.current = 0;
         }
 
         function onPosition(pos) {
