@@ -5,7 +5,7 @@ import { useAuth } from "../contexts/AuthContext.jsx";
 import L from "leaflet";
 import NoSleep from "nosleep.js";
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker, Polyline, useMap } from "react-leaflet";
-import { computeRouteMetrics, formatDistance, formatPaceSecondsPerMi, STEPS_PER_HOUR } from "../utils/routeMetrics.js";
+import { computeRouteMetrics, formatDistance, formatPaceSecondsPerMi } from "../utils/routeMetrics.js";
 
 const DEFAULT_CENTER = [39.8283, -98.5795];
 const DEFAULT_ZOOM = 16;
@@ -69,6 +69,8 @@ function RecordRoutePage() {
     const [saving, setSaving] = useState(false);
     const [routeId, setRouteId] = useState(null);
     const [points, setPoints] = useState([]);
+    const [testMoveGpsEnabled, setTestMoveGpsEnabled] = useState(false);
+    const testGpsFetchCountRef = useRef(0);
     const timerRef = useRef(null);
     const gpsIntervalRef = useRef(null);
     const hasAutoStartedRef = useRef(false);
@@ -147,6 +149,7 @@ function RecordRoutePage() {
                 clearInterval(timerRef.current);
                 timerRef.current = null;
             }
+            hasAutoStartedRef.current = false;
         };
     }, [allowed]);
 
@@ -168,7 +171,16 @@ function RecordRoutePage() {
             if (!navigator.geolocation) return;
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
-                    addPoint(pos.coords.latitude, pos.coords.longitude);
+                    let lat = pos.coords.latitude;
+                    let lng = pos.coords.longitude;
+                    if (testMoveGpsEnabled) {
+                        const count = testGpsFetchCountRef.current;
+                        testGpsFetchCountRef.current += 1;
+                        const baseDegrees = 0.00005 * (1 + count);
+                        lat += (Math.random() * 2 - 1) * baseDegrees;
+                        lng += (Math.random() * 2 - 1) * baseDegrees;
+                    }
+                    addPoint(lat, lng);
                 },
                 (err) => console.warn("Geolocation error:", err.message),
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
@@ -184,7 +196,7 @@ function RecordRoutePage() {
                 gpsIntervalRef.current = null;
             }
         };
-    }, [routeId, isRecording]);
+    }, [routeId, isRecording, testMoveGpsEnabled]);
 
     function stopTimer() {
         if (timerRef.current) {
@@ -333,6 +345,22 @@ function RecordRoutePage() {
 
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center flex-wrap">
+                    <button
+                        type="button"
+                        onClick={() => setTestMoveGpsEnabled((on) => !on)}
+                        className={`rounded-lg py-3 px-6 font-semibold border-2 ${
+                            testMoveGpsEnabled
+                                ? "bg-amber-600 border-amber-500 text-white hover:bg-amber-500"
+                                : "bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600"
+                        }`}
+                        title={
+                            testMoveGpsEnabled
+                                ? "Test move GPS on — coords are offset"
+                                : "Toggle fake GPS drift for testing (no real movement needed)"
+                        }
+                    >
+                        Test move GPS {testMoveGpsEnabled ? "ON" : ""}
+                    </button>
                     <button
                         type="button"
                         onClick={handleExit}

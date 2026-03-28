@@ -1,6 +1,6 @@
 const EARTH_RADIUS_M = 6371000;
 const METERS_PER_MILE = 1609.344;
-const STEPS_PER_HOUR = 6000;
+const STEPS_PER_MILE = 2000;
 
 function toRad(deg) {
   return (deg * Math.PI) / 180;
@@ -34,9 +34,8 @@ export function computeRouteMetrics(points, durationSeconds) {
     }
   }
 
-  const estimatedSteps = Math.round((safeDur / 3600) * STEPS_PER_HOUR);
-
   const distanceMiles = distanceMeters / METERS_PER_MILE;
+  const estimatedSteps = Math.round(distanceMiles * STEPS_PER_MILE);
   let paceSecondsPerMi = null;
   if (safeDur > 0 && distanceMiles > 0) {
     paceSecondsPerMi = safeDur / distanceMiles;
@@ -49,4 +48,4 @@ export function computeRouteMetrics(points, durationSeconds) {
   };
 }
 
-export { STEPS_PER_HOUR };
+export { STEPS_PER_MILE };

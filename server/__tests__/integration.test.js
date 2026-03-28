@@ -5,6 +5,7 @@ import request from 'supertest';
 import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 import { createApp } from '../app.js';
 import { ensureSchema, query } from '../db.js';
+import { computeRouteMetrics } from '../routeMetrics.js';
 
 const hasDb = Boolean(
   (process.env.DATABASE_URL && process.env.DATABASE_URL.trim()) ||
@@ -190,7 +191,11 @@ dbDescribe('User-facing API (PostgreSQL)', () => {
       expect(updated.body.durationSeconds).toBe(3600);
       expect(updated.body.name).toBe('Renamed on patch');
       expect(updated.body.distanceMeters).toBeGreaterThan(0);
-      expect(updated.body.estimatedSteps).toBe(6000);
+      const pts = [
+        { lat: 40.7128, lng: -74.006 },
+        { lat: 40.713, lng: -74.0061 },
+      ];
+      expect(updated.body.estimatedSteps).toBe(computeRouteMetrics(pts, 3600).estimatedSteps);
       expect(updated.body.paceSecondsPerMi).not.toBeNull();
     });
 

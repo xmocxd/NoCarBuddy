@@ -13,10 +13,12 @@ function HomePage() {
                         Find your way through the world on your own terms.
                     </p>
                     <p className="text-lg text-slate-400">
-                        Record walking and biking routes you find nearby and link them into trips that skip the car.
+                        Record and annotate Walking and Biking (TODO) paths you discover in your local area.
+                        Link them together (TODO) to create enjoyable No-Car options to get to your favorite destinations.
                     </p>
                     <p className="text-lg text-red-400">
-                        <em>GPS works best with the screen on; locking the phone can interrupt recording.</em>
+                        <em>PLEASE NOTE: This is a test / proof-of-concept app, and has GPS tracking limitations.
+                        You must keep your phone open while using the app - it will not work as intended if you lock your phone.</em>
                     </p>
                     <p className="text-lg text-slate-400">
                         Sign up for an account to get started

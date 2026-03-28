@@ -13,7 +13,7 @@ describe('routeMetrics', () => {
     ];
     const m = computeRouteMetrics(points, 3600);
     expect(m.distanceMeters).toBeGreaterThan(0);
-    expect(m.estimatedSteps).toBe(6000);
+    expect(m.estimatedSteps).toBe(Math.round((m.distanceMeters / 1609.344) * 2000));
     expect(m.paceSecondsPerMi).not.toBeNull();
     expect(m.paceSecondsPerMi).toBeGreaterThan(0);
   });
@@ -21,7 +21,7 @@ describe('routeMetrics', () => {
   it('returns zero distance for fewer than two points', () => {
     const m = computeRouteMetrics([{ lat: 1, lng: 2 }], 1800);
     expect(m.distanceMeters).toBe(0);
-    expect(m.estimatedSteps).toBe(3000);
+    expect(m.estimatedSteps).toBe(0);
     expect(m.paceSecondsPerMi).toBeNull();
   });
 });

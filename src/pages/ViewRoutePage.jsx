@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import L from "leaflet";
 import { MapContainer, TileLayer, Polyline, CircleMarker, useMap } from "react-leaflet";
-import { computeRouteMetrics, formatDistance, formatPaceSecondsPerMi, STEPS_PER_HOUR } from "../utils/routeMetrics.js";
+import { computeRouteMetrics, formatDistance, formatPaceSecondsPerMi, STEPS_PER_MILE } from "../utils/routeMetrics.js";
 
 const DEFAULT_CENTER = [39.8283, -98.5795];
 const DEFAULT_ZOOM = 4;
@@ -42,6 +42,13 @@ function ViewRoutePage() {
     const [route, setRoute] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [nameEditing, setNameEditing] = useState(false);
+    const [nameDraft, setNameDraft] = useState("");
+    const [nameSaving, setNameSaving] = useState(false);
+
+    useEffect(() => {
+        setNameEditing(false);
+    }, [id]);
 
     useEffect(() => {
         axios
@@ -83,6 +90,33 @@ function ViewRoutePage() {
         }
         return computeRouteMetrics(route.points || [], route.durationSeconds ?? 0);
     }, [route]);
+
+    function startNameEdit() {
+        if (!route) return;
+        setNameDraft(route.name || "");
+        setNameEditing(true);
+    }
+
+    function cancelNameEdit() {
+        setNameEditing(false);
+    }
+
+    function saveNameEdit() {
+        const trimmed = nameDraft.trim();
+        if (!trimmed || !id) return;
+        setNameSaving(true);
+        axios
+            .put(`/api/map-routes/${id}`, { name: trimmed }, { withCredentials: true })
+            .then((res) => {
+                setRoute(res.data);
+                setNameEditing(false);
+            })
+            .catch((err) => {
+                console.error("Failed to rename route:", err);
+                cancelNameEdit();
+            })
+            .finally(() => setNameSaving(false));
+    }
 
     if (loading) {
         return (
@@ -160,7 +194,56 @@ function ViewRoutePage() {
                 <dl className="space-y-4 text-sm sm:text-base">
                     <div>
                         <dt className="text-slate-400 font-medium">Name</dt>
-                        <dd className="text-white font-semibold mt-0.5">{route.name}</dd>
+                        <dd className="mt-0.5">
+                            {nameEditing ? (
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <input
+                                        type="text"
+                                        value={nameDraft}
+                                        onChange={(e) => setNameDraft(e.target.value)}
+                                        className="flex-1 min-w-[12rem] max-w-md p-2 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-emerald-500"
+                                        autoFocus
+                                        disabled={nameSaving}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={saveNameEdit}
+                                        disabled={nameSaving || !nameDraft.trim()}
+                                        className="rounded-lg bg-emerald-700 text-white hover:bg-emerald-600 disabled:opacity-50 py-2 px-4 text-sm font-semibold"
+                                    >
+                                        Save
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={cancelNameEdit}
+                                        disabled={nameSaving}
+                                        className="rounded-lg bg-slate-600 text-white hover:bg-slate-500 py-2 px-4 text-sm font-semibold"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-white font-semibold">{route.name}</span>
+                                    <button
+                                        type="button"
+                                        onClick={startNameEdit}
+                                        className="rounded p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-700"
+                                        title="Edit name"
+                                        aria-label="Edit route name"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                                            />
+                                        </svg>
+                                    </button>
+                                </div>
+                            )}
+                        </dd>
                     </div>
                     <div>
                         <dt className="text-slate-400 font-medium">Recorded at</dt>
@@ -175,7 +258,7 @@ function ViewRoutePage() {
                         <dd className="text-slate-300 font-mono tabular-nums mt-0.5">{formatDistance(displayMetrics.distanceMeters)}</dd>
                     </div>
                     <div>
-                        <dt className="text-slate-400 font-medium">Est. steps ({STEPS_PER_HOUR.toLocaleString()}/h)</dt>
+                        <dt className="text-slate-400 font-medium">Est. steps (~{STEPS_PER_MILE.toLocaleString()}/mi)</dt>
                         <dd className="text-slate-300 font-mono tabular-nums mt-0.5">
                             {displayMetrics.estimatedSteps.toLocaleString()}
                         </dd>
