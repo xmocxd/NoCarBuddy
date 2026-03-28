@@ -22,7 +22,7 @@ const navLinks = [
 const router = createBrowserRouter([
     {
         element: (
-            <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-zinc-900 via-zinc-800 to-zinc-900 px-4">
+            <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-zinc-900 via-zinc-800 to-zinc-900 lg:px-4 sm:px-0">
                 <NavBar pages={navLinks} />
                 <Outlet />
             </div>

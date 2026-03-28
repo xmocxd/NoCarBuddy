@@ -3,7 +3,7 @@ import HomePageMap from "../components/HomePageMap.jsx";
 
 function HomePage() {
     return (
-        <div className="max-w-2xl w-full flex flex-col gap-8 my-20">
+        <div className="max-w-2xl w-full flex flex-col gap-8 my-20 px-4">
             <div className="text-center space-y-8">
                 <div className="space-y-4">
                     <h1 className="text-6xl md:text-7xl font-bold text-white mb-6 tracking-tight">

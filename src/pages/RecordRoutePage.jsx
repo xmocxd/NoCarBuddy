@@ -8,8 +8,8 @@ import { MapContainer, TileLayer, Marker, Popup, CircleMarker, Polyline, useMap 
 import { computeRouteMetrics, formatDistance, formatPaceSecondsPerMi } from "../utils/routeMetrics.js";
 
 const DEFAULT_CENTER = [39.8283, -98.5795];
-const DEFAULT_ZOOM = 20;
-const LOCATION_ZOOM = 20;
+const DEFAULT_ZOOM = 18;
+const LOCATION_ZOOM = 18;
 const OSM_TILES = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
@@ -29,14 +29,15 @@ const greenPinIcon = new L.DivIcon({
 /** Minimum time between recorded points (watchPosition may fire more often). */
 const GPS_MIN_SAMPLE_INTERVAL_MS = 1000;
 
-function FlyToFirstPosition({ firstPosition }) {
+/** Keeps the map centered on the latest recorded GPS position as it updates. */
+function FollowLatestPosition({ lastPosition }) {
     const map = useMap();
-    const hasFlownRef = useRef(false);
+    const lat = lastPosition?.lat;
+    const lng = lastPosition?.lng;
     useEffect(() => {
-        if (!firstPosition || !map || hasFlownRef.current) return;
-        hasFlownRef.current = true;
-        map.flyTo(firstPosition, LOCATION_ZOOM, { duration: 1.5 });
-    }, [map, firstPosition]);
+        if (!map || lat == null || lng == null || Number.isNaN(lat) || Number.isNaN(lng)) return;
+        map.panTo([lat, lng], { animate: true, duration: 0.35, easeLinearity: 0.25 });
+    }, [map, lat, lng]);
     return null;
 }
 
@@ -303,15 +304,15 @@ function RecordRoutePage() {
 
     if (!allowed) {
         return (
-            <div className="w-full max-w-none -mx-4 px-0 sm:mx-auto sm:max-w-2xl sm:px-4 py-4 pt-20 text-center text-slate-300">
+            <div className="w-full max-w-non px-4 sm:mx-0 px-0 sm:mx-0 sm:max-w-2xl sm:px-4 py-4 pt-20 text-center text-slate-300">
                 Loading...
             </div>
         );
     }
 
     return (
-        <div className="w-full max-w-none -mx-4 px-0 sm:mx-auto sm:max-w-2xl sm:px-4 py-4 pt-20 pb-32">
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-none sm:rounded-xl shadow-2xl px-4 py-6 sm:p-8 border-y sm:border border-slate-700">
+        <div className="w-full max-w-none lg:mx-4 px-0 sm:max-w-2xl sm:mx-0 pt-20 pb-32">
+            <div className="bg-slate-800/50 backdrop-blur-sm rounded-none sm:rounded-xl shadow-2xl lg:px-4 py-6 sm:px-0 sm:mx-0 border-y sm:border border-slate-700">
                 <div className="mb-6 -mt-1 flex flex-row justify-between items-center gap-3">
                     <button
                         type="button"
@@ -349,7 +350,7 @@ function RecordRoutePage() {
                     </div>
                 </div>
 
-                <div className="w-full max-w-none -mx-4 sm:mx-auto sm:max-w-xl aspect-square rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-slate-700/80 shadow-xl mb-6">
+                <div className="w-full max-w-none sm:mx-0 sm:px-0 sm:max-w-xl aspect-square rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-slate-700/80 shadow-xl mb-6">
                     <MapContainer
                         center={DEFAULT_CENTER}
                         zoom={DEFAULT_ZOOM}
@@ -357,6 +358,7 @@ function RecordRoutePage() {
                         scrollWheelZoom={true}
                         zoomControl={false}
                         className="h-full w-full rounded-none sm:rounded-xl z-0"
+                        style={{ height: '400px', width: '100%' }}
                     >
                         <TileLayer
                             attribution={OSM_ATTRIBUTION}
@@ -364,7 +366,9 @@ function RecordRoutePage() {
                             maxZoom={LOCATION_ZOOM}
                             maxNativeZoom={19}
                         />
-                        <FlyToFirstPosition firstPosition={points.length > 0 ? points[0] : null} />
+                        <FollowLatestPosition
+                            lastPosition={points.length > 0 ? points[points.length - 1] : null}
+                        />
                         {points.length >= 2 && (
                             <Polyline
                                 positions={points.map((p) => [p.lat, p.lng])}
