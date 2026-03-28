@@ -10,7 +10,13 @@ import {
     formatDistance,
     formatPaceSecondsPerMi,
 } from "../utils/routeMetrics.js";
-import { shouldAcceptGpsCandidate, acceptGpsPoint, DEFAULT_GPS_OUTLIER_MULTIPLIER } from "../utils/gpsOutlier.js";
+import {
+    shouldAcceptGpsCandidate,
+    acceptGpsPoint,
+    DEFAULT_GPS_OUTLIER_MULTIPLIER,
+    nextOutlierRejectionCounters,
+    nextCooldownAfterAcceptedPoint,
+} from "../utils/gpsOutlier.js";
 
 const DEFAULT_CENTER = [39.8283, -98.5795];
 const DEFAULT_ZOOM = 19;
@@ -87,6 +93,8 @@ function RecordRoutePage() {
         segmentDistSumMeters: 0,
         segmentCount: 0,
     });
+    const gpsOutlierRejectedCountRef = useRef(0);
+    const gpsOutlierCooldownAcceptsRef = useRef(0);
     const hasAutoStartedRef = useRef(false);
     const pointsLogRef = useRef(null);
     const noSleepRef = useRef(null);
@@ -173,6 +181,8 @@ function RecordRoutePage() {
 
         lastGpsSampleAtRef.current = 0;
         gpsSegmentStateRef.current = { lastAccepted: null, segmentDistSumMeters: 0, segmentCount: 0 };
+        gpsOutlierRejectedCountRef.current = 0;
+        gpsOutlierCooldownAcceptsRef.current = 0;
 
         function addPoint(lat, lng) {
             axios
@@ -196,6 +206,7 @@ function RecordRoutePage() {
         }
 
         function shouldAcceptGpsPoint(lat, lng) {
+            if (gpsOutlierCooldownAcceptsRef.current > 0) return true;
             return shouldAcceptGpsCandidate({ lat, lng }, gpsSegmentStateRef.current, DEFAULT_GPS_OUTLIER_MULTIPLIER);
         }
 
@@ -214,9 +225,18 @@ function RecordRoutePage() {
                 outLat = o.lat;
                 outLng = o.lng;
             }
-            if (!shouldAcceptGpsPoint(outLat, outLng)) return;
+            if (!shouldAcceptGpsPoint(outLat, outLng)) {
+                const next = nextOutlierRejectionCounters(
+                    gpsOutlierRejectedCountRef.current,
+                    gpsOutlierCooldownAcceptsRef.current
+                );
+                gpsOutlierRejectedCountRef.current = next.rejectedCount;
+                gpsOutlierCooldownAcceptsRef.current = next.cooldownAcceptsRemaining;
+                return;
+            }
 
             lastGpsSampleAtRef.current = now;
+            gpsOutlierCooldownAcceptsRef.current = nextCooldownAfterAcceptedPoint(gpsOutlierCooldownAcceptsRef.current);
             recordAcceptedGpsRefs(outLat, outLng);
             addPoint(outLat, outLng);
         }

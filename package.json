@@ -10,7 +10,10 @@
     "preview": "vite preview",
     "server": "node server/server.js",
     "server-dev": "nodemon -L server/server.js",
-    "test": "npm --prefix server run test"
+    "test": "npm run test:client && npm --prefix server run test",
+    "test:client": "vitest run",
+    "test:client:watch": "vitest",
+    "test:all": "npm test"
   },
   "dependencies": {
     "concurrently": "^9.2.1",
@@ -22,6 +25,9 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.17",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@vitejs/plugin-react": "^5.1.1",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
@@ -32,6 +38,7 @@
     "debug": "^2.6.9",
     "express": "^4.22.1",
     "express-winston": "^4.2.0",
+    "jsdom": "^29.0.1",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.23",
     "nodemon": "^3.1.9",
@@ -41,6 +48,7 @@
     "serve-favicon": "^2.5.0",
     "tailwindcss": "^4.1.17",
     "vite": "^7.2.6",
+    "vitest": "^4.1.2",
     "winston": "^3.18.3"
   }
 }
